@@ -23,53 +23,64 @@ public class SusCalcServer {
     private static final double CO2_PER_FAST_FASHION_ITEM = 8.0;
 
     private static final String INDEX_FILE = "suscalc_index.html";
+    private static final String STYLE_FILE = "styles.css";
+    private static final String JS_FILE = "app.js";
 
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8071), 0);
-        server.createContext("/", new IndexHandler());
+        server.createContext("/", new IndexHandler(INDEX_FILE));
+        server.createContext("/styles.css", new IndexHandler(STYLE_FILE));
+        server.createContext("/app.js", new IndexHandler(JS_FILE));
         server.createContext("/calculate", new CalculateHandler());
         server.setExecutor(null);
         server.start();
         System.out.println("SusCalc backend running at http://localhost:8071");
     }
-
+  
+    private static String getMimeType(Path path) {
+      String name = path.getFileName().toString();
+      if (name.endsWith(".css"))  return "text/css; charset=UTF-8";
+      if (name.endsWith(".js"))   return "application/javascript; charset=UTF-8";
+      return "text/html; charset=UTF-8";
+    }
     // -------------------------------------------------------------------------
     // GET / — serves suscalc_index.html
     // -------------------------------------------------------------------------
     static class IndexHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            addCorsHeaders(exchange);
+    private final Path htmlPath;
 
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                exchange.close();
-                return;
-            }
+    IndexHandler(String filePath) {
+        this.htmlPath = Paths.get(filePath);
+    }
 
-            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-                sendResponse(exchange, 405, "text/plain", "Only GET is allowed on this endpoint.");
-                return;
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        addCorsHeaders(exchange);
+        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+            return;
+        }
+        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            sendResponse(exchange, 405, "text/plain", "Only GET is allowed on this endpoint.");
+            return;
+        }
+        if (!Files.exists(htmlPath)) {
+            sendResponse(exchange, 404, "text/plain", htmlPath + " not found.");
+            return;
+        }
+        try {
+            byte[] htmlBytes = Files.readAllBytes(htmlPath);
+            exchange.getResponseHeaders().set("Content-Type", getMimeType(htmlPath));
+            exchange.sendResponseHeaders(200, htmlBytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(htmlBytes);
             }
-
-            Path htmlPath = Paths.get(INDEX_FILE);
-            if (!Files.exists(htmlPath)) {
-                sendResponse(exchange, 404, "text/plain", INDEX_FILE + " not found.");
-                return;
-            }
-
-            try {
-                byte[] htmlBytes = Files.readAllBytes(htmlPath);
-                exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
-                exchange.sendResponseHeaders(200, htmlBytes.length);
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(htmlBytes);
-                }
-            } catch (IOException e) {
-                sendResponse(exchange, 500, "text/plain", "Error reading " + INDEX_FILE);
-            }
+        } catch (IOException e) {
+            sendResponse(exchange, 500, "text/plain", "Error reading " + htmlPath);
         }
     }
+  }
 
     // -------------------------------------------------------------------------
     // POST /calculate — computes CO2 impact and returns JSON
