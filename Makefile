@@ -1,5 +1,5 @@
 project:
 	javac *.java
-	java Main
+	java SusCalcServer
 clean:
 	rm *.class

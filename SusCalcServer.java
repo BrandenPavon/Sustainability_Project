@@ -10,6 +10,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SusCalcServer {
 
@@ -19,14 +22,58 @@ public class SusCalcServer {
     private static final double CO2_PER_FLIGHT = 250.0;
     private static final double CO2_PER_FAST_FASHION_ITEM = 8.0;
 
+    private static final String INDEX_FILE = "suscalc_index.html";
+
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        server.createContext("/", new IndexHandler());
         server.createContext("/calculate", new CalculateHandler());
         server.setExecutor(null);
         server.start();
         System.out.println("SusCalc backend running at http://localhost:8080");
     }
 
+    // -------------------------------------------------------------------------
+    // GET / — serves suscalc_index.html
+    // -------------------------------------------------------------------------
+    static class IndexHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            addCorsHeaders(exchange);
+
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                exchange.close();
+                return;
+            }
+
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, "text/plain", "Only GET is allowed on this endpoint.");
+                return;
+            }
+
+            Path htmlPath = Paths.get(INDEX_FILE);
+            if (!Files.exists(htmlPath)) {
+                sendResponse(exchange, 404, "text/plain", INDEX_FILE + " not found.");
+                return;
+            }
+
+            try {
+                byte[] htmlBytes = Files.readAllBytes(htmlPath);
+                exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+                exchange.sendResponseHeaders(200, htmlBytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(htmlBytes);
+                }
+            } catch (IOException e) {
+                sendResponse(exchange, 500, "text/plain", "Error reading " + INDEX_FILE);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /calculate — computes CO2 impact and returns JSON
+    // -------------------------------------------------------------------------
     static class CalculateHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -46,19 +93,15 @@ public class SusCalcServer {
             try {
                 String body = readBody(exchange.getRequestBody());
 
-                double showerMinutesPerDay = extractDouble(body, "showerMinutesPerDay");
-                int redMeatMealsPerWeek = extractInt(body, "redMeatMealsPerWeek");
-                double carMilesPerWeek = extractDouble(body, "carMilesPerWeek");
-                int flightsPerYear = extractInt(body, "flightsPerYear");
-                int fashionItemsPerMonth = extractInt(body, "fashionItemsPerMonth");
+                double showerMinutesPerDay    = extractDouble(body, "showerMinutesPerDay");
+                int    redMeatMealsPerWeek    = extractInt   (body, "redMeatMealsPerWeek");
+                double carMilesPerWeek        = extractDouble(body, "carMilesPerWeek");
+                int    flightsPerYear         = extractInt   (body, "flightsPerYear");
+                int    fashionItemsPerMonth   = extractInt   (body, "fashionItemsPerMonth");
 
                 String validationError = validateInputs(
-                        showerMinutesPerDay,
-                        redMeatMealsPerWeek,
-                        carMilesPerWeek,
-                        flightsPerYear,
-                        fashionItemsPerMonth
-                );
+                        showerMinutesPerDay, redMeatMealsPerWeek,
+                        carMilesPerWeek, flightsPerYear, fashionItemsPerMonth);
 
                 if (validationError != null) {
                     sendJson(exchange, 400, "{\"error\":\"" + escapeJson(validationError) + "\"}");
@@ -66,22 +109,18 @@ public class SusCalcServer {
                 }
 
                 HabitImpact impact = calculateImpact(
-                        showerMinutesPerDay,
-                        redMeatMealsPerWeek,
-                        carMilesPerWeek,
-                        flightsPerYear,
-                        fashionItemsPerMonth
-                );
+                        showerMinutesPerDay, redMeatMealsPerWeek,
+                        carMilesPerWeek, flightsPerYear, fashionItemsPerMonth);
 
                 String json = "{"
-                        + "\"showerCO2\":" + impact.getShowerCO2() + ","
-                        + "\"meatCO2\":" + impact.getMeatCO2() + ","
-                        + "\"carCO2\":" + impact.getCarCO2() + ","
-                        + "\"flightCO2\":" + impact.getFlightCO2() + ","
-                        + "\"fashionCO2\":" + impact.getFashionCO2() + ","
-                        + "\"totalCO2\":" + impact.getTotalCO2() + ","
+                        + "\"showerCO2\":"        + impact.getShowerCO2()  + ","
+                        + "\"meatCO2\":"          + impact.getMeatCO2()    + ","
+                        + "\"carCO2\":"           + impact.getCarCO2()     + ","
+                        + "\"flightCO2\":"        + impact.getFlightCO2()  + ","
+                        + "\"fashionCO2\":"       + impact.getFashionCO2() + ","
+                        + "\"totalCO2\":"         + impact.getTotalCO2()   + ","
                         + "\"biggestCategory\":\"" + escapeJson(impact.getBiggestCategory()) + "\","
-                        + "\"recommendation\":\"" + escapeJson(impact.getRecommendation()) + "\""
+                        + "\"recommendation\":\""  + escapeJson(impact.getRecommendation())  + "\""
                         + "}";
 
                 sendJson(exchange, 200, json);
@@ -94,157 +133,116 @@ public class SusCalcServer {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Business logic
+    // -------------------------------------------------------------------------
     private static HabitImpact calculateImpact(double showerMinutesPerDay,
-                                               int redMeatMealsPerWeek,
+                                               int    redMeatMealsPerWeek,
                                                double carMilesPerWeek,
-                                               int flightsPerYear,
-                                               int fashionItemsPerMonth) {
+                                               int    flightsPerYear,
+                                               int    fashionItemsPerMonth) {
 
-        double showerCO2 = showerMinutesPerDay * 365 * CO2_PER_SHOWER_MINUTE;
-        double meatCO2 = redMeatMealsPerWeek * 52 * CO2_PER_RED_MEAT_MEAL;
-        double carCO2 = carMilesPerWeek * 52 * CO2_PER_CAR_MILE;
-        double flightCO2 = flightsPerYear * CO2_PER_FLIGHT;
-        double fashionCO2 = fashionItemsPerMonth * 12 * CO2_PER_FAST_FASHION_ITEM;
+        double showerCO2  = showerMinutesPerDay  * 365 * CO2_PER_SHOWER_MINUTE;
+        double meatCO2    = redMeatMealsPerWeek  *  52 * CO2_PER_RED_MEAT_MEAL;
+        double carCO2     = carMilesPerWeek       *  52 * CO2_PER_CAR_MILE;
+        double flightCO2  = flightsPerYear              * CO2_PER_FLIGHT;
+        double fashionCO2 = fashionItemsPerMonth  *  12 * CO2_PER_FAST_FASHION_ITEM;
 
         double totalCO2 = showerCO2 + meatCO2 + carCO2 + flightCO2 + fashionCO2;
 
         String biggestCategory = "Showers";
-        double biggestValue = showerCO2;
+        double biggestValue    = showerCO2;
 
-        if (meatCO2 > biggestValue) {
-            biggestValue = meatCO2;
-            biggestCategory = "Red Meat";
-        }
-        if (carCO2 > biggestValue) {
-            biggestValue = carCO2;
-            biggestCategory = "Car Travel";
-        }
-        if (flightCO2 > biggestValue) {
-            biggestValue = flightCO2;
-            biggestCategory = "Flights";
-        }
-        if (fashionCO2 > biggestValue) {
-            biggestValue = fashionCO2;
-            biggestCategory = "Fast Fashion";
-        }
+        if (meatCO2    > biggestValue) { biggestValue = meatCO2;    biggestCategory = "Red Meat";    }
+        if (carCO2     > biggestValue) { biggestValue = carCO2;     biggestCategory = "Car Travel";  }
+        if (flightCO2  > biggestValue) { biggestValue = flightCO2;  biggestCategory = "Flights";     }
+        if (fashionCO2 > biggestValue) {                            biggestCategory = "Fast Fashion"; }
 
-        return new HabitImpact(
-                showerCO2,
-                meatCO2,
-                carCO2,
-                flightCO2,
-                fashionCO2,
-                totalCO2,
-                biggestCategory,
-                buildRecommendation(biggestCategory)
-        );
+        return new HabitImpact(showerCO2, meatCO2, carCO2, flightCO2, fashionCO2,
+                               totalCO2, biggestCategory, buildRecommendation(biggestCategory));
     }
 
     private static String buildRecommendation(String biggestCategory) {
         switch (biggestCategory) {
-            case "Showers":
-                return "Try reducing shower time by 2-3 minutes per day to lower water-heating emissions.";
-            case "Red Meat":
-                return "Try replacing 1-2 red meat meals per week with chicken, beans, or plant-based meals.";
-            case "Car Travel":
-                return "Try carpooling, public transit, or combining trips to cut driving emissions.";
-            case "Flights":
-                return "Reducing even one flight per year can significantly lower your footprint.";
-            case "Fast Fashion":
-                return "Buy fewer new clothes, thrift more often, and choose longer-lasting items.";
-            default:
-                return "Keep improving one habit at a time.";
+            case "Showers":      return "Try reducing shower time by 2-3 minutes per day to lower water-heating emissions.";
+            case "Red Meat":     return "Try replacing 1-2 red meat meals per week with chicken, beans, or plant-based meals.";
+            case "Car Travel":   return "Try carpooling, public transit, or combining trips to cut driving emissions.";
+            case "Flights":      return "Reducing even one flight per year can significantly lower your footprint.";
+            case "Fast Fashion": return "Buy fewer new clothes, thrift more often, and choose longer-lasting items.";
+            default:             return "Keep improving one habit at a time.";
         }
     }
 
     private static String validateInputs(double showerMinutesPerDay,
-                                         int redMeatMealsPerWeek,
+                                         int    redMeatMealsPerWeek,
                                          double carMilesPerWeek,
-                                         int flightsPerYear,
-                                         int fashionItemsPerMonth) {
-        if (showerMinutesPerDay < 0 || showerMinutesPerDay > 120) {
-            return "Average shower minutes per day must be between 0 and 120.";
-        }
-        if (redMeatMealsPerWeek < 0 || redMeatMealsPerWeek > 50) {
-            return "Red meat meals per week must be between 0 and 50.";
-        }
-        if (carMilesPerWeek < 0 || carMilesPerWeek > 5000) {
-            return "Car miles per week must be between 0 and 5000.";
-        }
-        if (flightsPerYear < 0 || flightsPerYear > 100) {
-            return "Flights per year must be between 0 and 100.";
-        }
-        if (fashionItemsPerMonth < 0 || fashionItemsPerMonth > 100) {
-            return "Fast fashion items per month must be between 0 and 100.";
-        }
+                                         int    flightsPerYear,
+                                         int    fashionItemsPerMonth) {
+        if (showerMinutesPerDay  < 0 || showerMinutesPerDay  > 120)  return "Average shower minutes per day must be between 0 and 120.";
+        if (redMeatMealsPerWeek  < 0 || redMeatMealsPerWeek  >  50)  return "Red meat meals per week must be between 0 and 50.";
+        if (carMilesPerWeek      < 0 || carMilesPerWeek      > 5000) return "Car miles per week must be between 0 and 5000.";
+        if (flightsPerYear       < 0 || flightsPerYear       >  100) return "Flights per year must be between 0 and 100.";
+        if (fashionItemsPerMonth < 0 || fashionItemsPerMonth >  100) return "Fast fashion items per month must be between 0 and 100.";
         return null;
     }
 
+    // -------------------------------------------------------------------------
+    // Shared HTTP helpers
+    // -------------------------------------------------------------------------
     private static void addCorsHeaders(HttpExchange exchange) {
         Headers headers = exchange.getResponseHeaders();
-        headers.add("Access-Control-Allow-Origin", "*");
-        headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
+        headers.add("Access-Control-Allow-Origin",  "*");
+        headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         headers.add("Access-Control-Allow-Headers", "Content-Type");
-        headers.add("Content-Type", "application/json; charset=UTF-8");
     }
 
-    private static void sendJson(HttpExchange exchange, int statusCode, String json) throws IOException {
-        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
-        exchange.sendResponseHeaders(statusCode, bytes.length);
-        OutputStream os = exchange.getResponseBody();
-        os.write(bytes);
-        os.close();
+    private static void sendJson(HttpExchange exchange, int status, String json) throws IOException {
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        sendResponse(exchange, status, "application/json", json);
+    }
+
+    private static void sendResponse(HttpExchange exchange, int status,
+                                     String contentType, String body) throws IOException {
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", contentType + "; charset=UTF-8");
+        exchange.sendResponseHeaders(status, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
     }
 
     private static String readBody(InputStream inputStream) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder();
         String line;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line);
-        }
+        while ((line = reader.readLine()) != null) sb.append(line);
         return sb.toString();
     }
 
     private static double extractDouble(String json, String key) {
-        String value = extractValue(json, key);
-        try {
-            return Double.parseDouble(value);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid number for " + key + ".");
-        }
+        try { return Double.parseDouble(extractValue(json, key)); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid number for " + key + "."); }
     }
 
     private static int extractInt(String json, String key) {
-        String value = extractValue(json, key);
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid whole number for " + key + ".");
-        }
+        try { return Integer.parseInt(extractValue(json, key)); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid whole number for " + key + "."); }
     }
 
     private static String extractValue(String json, String key) {
         String quotedKey = "\"" + key + "\"";
         int keyIndex = json.indexOf(quotedKey);
-        if (keyIndex == -1) {
-            throw new IllegalArgumentException("Missing field: " + key + ".");
-        }
+        if (keyIndex == -1) throw new IllegalArgumentException("Missing field: " + key + ".");
 
         int colonIndex = json.indexOf(":", keyIndex);
-        if (colonIndex == -1) {
-            throw new IllegalArgumentException("Invalid JSON for field: " + key + ".");
-        }
+        if (colonIndex == -1) throw new IllegalArgumentException("Invalid JSON for field: " + key + ".");
 
         int start = colonIndex + 1;
-        while (start < json.length() && Character.isWhitespace(json.charAt(start))) {
-            start++;
-        }
+        while (start < json.length() && Character.isWhitespace(json.charAt(start))) start++;
 
         int end = start;
-        while (end < json.length() && ",}".indexOf(json.charAt(end)) == -1) {
-            end++;
-        }
+        while (end < json.length() && ",}".indexOf(json.charAt(end)) == -1) end++;
 
         return json.substring(start, end).trim().replace("\"", "");
     }
@@ -254,63 +252,32 @@ public class SusCalcServer {
     }
 }
 
+// -----------------------------------------------------------------------------
+// Value object
+// -----------------------------------------------------------------------------
 class HabitImpact {
-    private final double showerCO2;
-    private final double meatCO2;
-    private final double carCO2;
-    private final double flightCO2;
-    private final double fashionCO2;
-    private final double totalCO2;
-    private final String biggestCategory;
-    private final String recommendation;
+    private final double showerCO2, meatCO2, carCO2, flightCO2, fashionCO2, totalCO2;
+    private final String biggestCategory, recommendation;
 
-    public HabitImpact(double showerCO2,
-                       double meatCO2,
-                       double carCO2,
-                       double flightCO2,
-                       double fashionCO2,
-                       double totalCO2,
-                       String biggestCategory,
-                       String recommendation) {
-        this.showerCO2 = showerCO2;
-        this.meatCO2 = meatCO2;
-        this.carCO2 = carCO2;
-        this.flightCO2 = flightCO2;
-        this.fashionCO2 = fashionCO2;
-        this.totalCO2 = totalCO2;
+    public HabitImpact(double showerCO2, double meatCO2, double carCO2,
+                       double flightCO2, double fashionCO2, double totalCO2,
+                       String biggestCategory, String recommendation) {
+        this.showerCO2       = showerCO2;
+        this.meatCO2         = meatCO2;
+        this.carCO2          = carCO2;
+        this.flightCO2       = flightCO2;
+        this.fashionCO2      = fashionCO2;
+        this.totalCO2        = totalCO2;
         this.biggestCategory = biggestCategory;
-        this.recommendation = recommendation;
+        this.recommendation  = recommendation;
     }
 
-    public double getShowerCO2() {
-        return showerCO2;
-    }
-
-    public double getMeatCO2() {
-        return meatCO2;
-    }
-
-    public double getCarCO2() {
-        return carCO2;
-    }
-
-    public double getFlightCO2() {
-        return flightCO2;
-    }
-
-    public double getFashionCO2() {
-        return fashionCO2;
-    }
-
-    public double getTotalCO2() {
-        return totalCO2;
-    }
-
-    public String getBiggestCategory() {
-        return biggestCategory;
-    }
-
-    public String getRecommendation() {
-        return recommendation;
-    }
+    public double getShowerCO2()       { return showerCO2;       }
+    public double getMeatCO2()         { return meatCO2;         }
+    public double getCarCO2()          { return carCO2;          }
+    public double getFlightCO2()       { return flightCO2;       }
+    public double getFashionCO2()      { return fashionCO2;      }
+    public double getTotalCO2()        { return totalCO2;        }
+    public String getBiggestCategory() { return biggestCategory; }
+    public String getRecommendation()  { return recommendation;  }
 }
