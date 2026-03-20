@@ -25,12 +25,12 @@ public class SusCalcServer {
     private static final String INDEX_FILE = "suscalc_index.html";
 
     public static void main(String[] args) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(8071), 0);
         server.createContext("/", new IndexHandler());
         server.createContext("/calculate", new CalculateHandler());
         server.setExecutor(null);
         server.start();
-        System.out.println("SusCalc backend running at http://localhost:8080");
+        System.out.println("SusCalc backend running at http://localhost:8071");
     }
 
     // -------------------------------------------------------------------------
