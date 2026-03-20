@@ -18,7 +18,7 @@ form.addEventListener("submit", async function (event) {
   };
 
   try {
-    const response = await fetch("/calculate", {
+    const response = await fetch("http://footprintr.org/calculate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
