@@ -18,7 +18,7 @@ form.addEventListener("submit", async function (event) {
   };
 
   try {
-    const response = await fetch("http://localhost:8071/calculate", {
+    const response = await fetch("/calculate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
