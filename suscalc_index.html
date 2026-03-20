@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SusCalc</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.5;
+    }
+    h1 {
+      margin-bottom: 8px;
+    }
+    p {
+      margin-top: 0;
+      color: #444;
+    }
+    form {
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      max-width: 280px;
+      padding: 8px;
+      margin-top: 6px;
+    }
+    button {
+      padding: 10px 16px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    #status {
+      margin-top: 16px;
+      font-weight: bold;
+    }
+    #results {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      padding: 16px;
+      border-radius: 8px;
+      display: none;
+    }
+    .row {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>SusCalc</h1>
+  <p>Enter your habits and get an estimated annual CO2 impact.</p>
+
+  <form id="susCalcForm">
+    <label for="showerMinutes">Average shower minutes per day (0-120):</label><br>
+    <input
+      type="number"
+      id="showerMinutes"
+      name="showerMinutesPerDay"
+      min="0"
+      max="120"
+      step="0.1"
+      required
+    ><br><br>
+
+    <label for="redMeat">Red meat meals per week (0-50):</label><br>
+    <input
+      type="number"
+      id="redMeat"
+      name="redMeatMealsPerWeek"
+      min="0"
+      max="50"
+      step="1"
+      required
+    ><br><br>
+
+    <label for="carMiles">Car miles driven per week (0-5000):</label><br>
+    <input
+      type="number"
+      id="carMiles"
+      name="carMilesPerWeek"
+      min="0"
+      max="5000"
+      step="0.1"
+      required
+    ><br><br>
+
+    <label for="flights">Flights per year (0-100):</label><br>
+    <input
+      type="number"
+      id="flights"
+      name="flightsPerYear"
+      min="0"
+      max="100"
+      step="1"
+      required
+    ><br><br>
+
+    <label for="fashion">Fast fashion items bought per month (0-100):</label><br>
+    <input
+      type="number"
+      id="fashion"
+      name="fashionItemsPerMonth"
+      min="0"
+      max="100"
+      step="1"
+      required
+    ><br><br>
+
+    <button type="submit">Calculate Impact</button>
+  </form>
+
+  <div id="status"></div>
+
+  <div id="results">
+    <h2>Results</h2>
+    <div class="row"><strong>Showers:</strong> <span id="showerCO2"></span> kg CO2/year</div>
+    <div class="row"><strong>Red Meat:</strong> <span id="meatCO2"></span> kg CO2/year</div>
+    <div class="row"><strong>Car Travel:</strong> <span id="carCO2"></span> kg CO2/year</div>
+    <div class="row"><strong>Flights:</strong> <span id="flightCO2"></span> kg CO2/year</div>
+    <div class="row"><strong>Fast Fashion:</strong> <span id="fashionCO2"></span> kg CO2/year</div>
+    <hr>
+    <div class="row"><strong>Total:</strong> <span id="totalCO2"></span> kg CO2/year</div>
+    <div class="row"><strong>Total:</strong> <span id="totalTons"></span> tons CO2/year</div>
+    <div class="row"><strong>Biggest impact area:</strong> <span id="biggestCategory"></span></div>
+    <div class="row"><strong>Best suggestion:</strong> <span id="recommendation"></span></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("susCalcForm");
+    const statusDiv = document.getElementById("status");
+    const resultsDiv = document.getElementById("results");
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      statusDiv.textContent = "Calculating...";
+      resultsDiv.style.display = "none";
+
+      const payload = {
+        showerMinutesPerDay: parseFloat(document.getElementById("showerMinutes").value),
+        redMeatMealsPerWeek: parseInt(document.getElementById("redMeat").value, 10),
+        carMilesPerWeek: parseFloat(document.getElementById("carMiles").value),
+        flightsPerYear: parseInt(document.getElementById("flights").value, 10),
+        fashionItemsPerMonth: parseInt(document.getElementById("fashion").value, 10)
+      };
+
+      try {
+        const response = await fetch("http://localhost:8080/calculate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          statusDiv.textContent = data.error || "Something went wrong.";
+          return;
+        }
+
+        document.getElementById("showerCO2").textContent = data.showerCO2.toFixed(2);
+        document.getElementById("meatCO2").textContent = data.meatCO2.toFixed(2);
+        document.getElementById("carCO2").textContent = data.carCO2.toFixed(2);
+        document.getElementById("flightCO2").textContent = data.flightCO2.toFixed(2);
+        document.getElementById("fashionCO2").textContent = data.fashionCO2.toFixed(2);
+        document.getElementById("totalCO2").textContent = data.totalCO2.toFixed(2);
+        document.getElementById("totalTons").textContent = (data.totalCO2 / 1000.0).toFixed(2);
+        document.getElementById("biggestCategory").textContent = data.biggestCategory;
+        document.getElementById("recommendation").textContent = data.recommendation;
+
+        statusDiv.textContent = "Calculation complete.";
+        resultsDiv.style.display = "block";
+      } catch (error) {
+        statusDiv.textContent = "Could not connect to the Java backend. Make sure it is running on port 8080.";
+      }
+    });
+  </script>
+
+</body>
+</html>
