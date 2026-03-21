@@ -11,6 +11,9 @@ class WindowManager {
     this.zBase = 100;
     this.zTop  = this.zBase;
     this.windows = [];
+    this.isMobile = window.innerWidth <= 768;
+    this.currentMobileWin = null;
+    this.mobileGameMode = false;
 
     document.querySelectorAll('.xp-window').forEach(el => this.register(el));
     this.buildTaskbar();
@@ -19,6 +22,98 @@ class WindowManager {
 
     document.getElementById('desktop').addEventListener('mousedown', () => {
       document.getElementById('start-menu').classList.remove('open');
+    });
+
+    if (this.isMobile) {
+      this.initMobileNav();
+      // Show calculator by default on mobile
+      const calcWin = this.windows.find(w => w.id === 'win-calc');
+      if (calcWin) this.mobileShow(calcWin, 'win-calc');
+    }
+
+    // Handle resize (e.g. orientation change)
+    window.addEventListener('resize', () => {
+      const wasMobile = this.isMobile;
+      this.isMobile = window.innerWidth <= 768;
+      if (wasMobile !== this.isMobile) location.reload();
+    });
+  }
+
+  /* ── Mobile: show a window full-screen ── */
+  mobileShow(win, tabWinId) {
+    if (!win) return;
+    this.mobileGameMode = false;
+
+    // Hide all windows
+    this.windows.forEach(w => {
+      w.el.classList.remove('mobile-visible');
+    });
+
+    // Hide game overlay
+    const gameOverlay = document.getElementById('mobile-game-overlay');
+    if (gameOverlay) gameOverlay.style.display = 'none';
+
+    // Reveal bins row in normal position
+    const binsRow = document.getElementById('bins-row');
+    if (binsRow) binsRow.style.display = '';
+
+    // Open & show selected window
+    if (win.closed) {
+      win.closed = false;
+      win.el.style.display = '';
+      win.el.style.opacity = '';
+      win.el.style.transform = '';
+      win.el.style.pointerEvents = '';
+      win.el.style.transition = '';
+    }
+    win.minimized = false;
+    win.el.classList.remove('minimized');
+    win.el.classList.add('mobile-visible');
+    this.currentMobileWin = win;
+
+    // Update tab active state
+    const tid = tabWinId || win.id;
+    document.querySelectorAll('.mobile-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.win === tid);
+    });
+  }
+
+  /* ── Mobile: show desktop/game view ── */
+  mobileShowGame() {
+    this.mobileGameMode = true;
+
+    // Hide all windows
+    this.windows.forEach(w => w.el.classList.remove('mobile-visible'));
+    this.currentMobileWin = null;
+
+    // Show game overlay
+    const gameOverlay = document.getElementById('mobile-game-overlay');
+    if (gameOverlay) {
+      gameOverlay.style.display = 'flex';
+      gameOverlay.classList.add('visible');
+    }
+
+    // Update tab
+    document.querySelectorAll('.mobile-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.win === 'game');
+    });
+  }
+
+  /* ── Mobile nav initialization ── */
+  initMobileNav() {
+    const nav = document.getElementById('mobile-nav');
+    if (!nav) return;
+
+    nav.querySelectorAll('.mobile-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const winId = tab.dataset.win;
+        if (winId === 'game') {
+          this.mobileShowGame();
+          return;
+        }
+        const win = this.windows.find(w => w.id === winId);
+        if (win) this.mobileShow(win, winId);
+      });
     });
   }
 
@@ -62,6 +157,7 @@ class WindowManager {
 
   focus(win) {
     if (win.closed) return;
+    if (this.isMobile) { this.mobileShow(win); return; }
     if (win.minimized) {
       win.minimized = false;
       win.el.classList.remove('minimized');
@@ -100,6 +196,7 @@ class WindowManager {
   }
 
   open(win) {
+    if (this.isMobile) { this.mobileShow(win); return; }
     if (win.closed) {
       win.closed = false;
       win.el.style.display = '';
@@ -756,7 +853,10 @@ function spawnFallingItem() {
   if (!zone || activeItems.length >= MAX_ITEMS) return;
 
   const def  = TRASH_ITEMS[Math.floor(Math.random() * TRASH_ITEMS.length)];
-  const size = 28 + Math.random() * 14;            // 28-42px
+  const isMobile = window.innerWidth <= 768;
+  const size = isMobile
+    ? 36 + Math.random() * 16          // 36–52px on mobile (easier to grab)
+    : 28 + Math.random() * 14;         // 28–42px on desktop
   const dur  = 7 + Math.random() * 6;              // 7-13s fall
   const wobble = (Math.random() - 0.5) * 40;       // horizontal drift px
 
@@ -764,7 +864,9 @@ function spawnFallingItem() {
   el.className = 'fall-item';
   el.dataset.type = def.type;
   el.style.cssText = [
-    `right: ${10 + Math.random() * 140}px`,        // cluster top-right
+    isMobile
+      ? `left: ${5 + Math.random() * 75}vw`           // full width spread on mobile
+      : `right: ${10 + Math.random() * 140}px`,       // cluster top-right on desktop
     `top: -60px`,
     `font-size: ${size}px`,
     `--dur: ${dur}s`,
@@ -794,18 +896,15 @@ function spawnFallingItem() {
 function makeDraggable(el, def) {
   let ox, oy, startL, startT, dragging = false;
 
-  el.addEventListener('mousedown', (e) => {
-    e.stopPropagation();
+  function startDrag(clientX, clientY) {
     dragging = true;
-    ox = e.clientX; oy = e.clientY;
+    ox = clientX; oy = clientY;
 
-    // Snapshot rendered position
     const r = el.getBoundingClientRect();
     const deskR = document.getElementById('desktop').getBoundingClientRect();
     startL = r.left - deskR.left;
     startT = r.top  - deskR.top;
 
-    // Freeze animation, switch to free positioning
     el.style.animation = 'none';
     el.style.position  = 'absolute';
     el.style.right     = 'auto';
@@ -813,54 +912,87 @@ function makeDraggable(el, def) {
     el.style.top       = startT + 'px';
     el.style.zIndex    = 9000;
     el.classList.add('fi-dragging');
+  }
+
+  function moveDrag(clientX, clientY) {
+    if (!dragging) return;
+    el.style.left = (startL + clientX - ox) + 'px';
+    el.style.top  = (startT + clientY - oy) + 'px';
 
     const bins = document.querySelectorAll('.desktop-bin');
+    bins.forEach(bin => {
+      const br = bin.getBoundingClientRect();
+      const over = clientX >= br.left && clientX <= br.right &&
+                   clientY >= br.top  && clientY <= br.bottom;
+      bin.classList.toggle('bin-hover-correct', over && bin.dataset.type === def.type);
+      bin.classList.toggle('bin-hover-wrong',   over && bin.dataset.type !== def.type);
+    });
+  }
 
-    const onMove = (mv) => {
-      el.style.left = (startL + mv.clientX - ox) + 'px';
-      el.style.top  = (startT + mv.clientY - oy) + 'px';
-      bins.forEach(bin => {
-        const br = bin.getBoundingClientRect();
-        const over = mv.clientX >= br.left && mv.clientX <= br.right &&
-                     mv.clientY >= br.top  && mv.clientY <= br.bottom;
-        bin.classList.toggle('bin-hover-correct', over && bin.dataset.type === def.type);
-        bin.classList.toggle('bin-hover-wrong',   over && bin.dataset.type !== def.type);
-      });
-    };
+  function endDrag(clientX, clientY) {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove('fi-dragging');
 
-    const onUp = (up) => {
-      dragging = false;
-      el.classList.remove('fi-dragging');
+    const bins = document.querySelectorAll('.desktop-bin');
+    bins.forEach(b => b.classList.remove('bin-hover-correct','bin-hover-wrong'));
+
+    let dropped = false;
+    bins.forEach(bin => {
+      const br = bin.getBoundingClientRect();
+      if (clientX >= br.left && clientX <= br.right &&
+          clientY >= br.top  && clientY <= br.bottom) {
+        dropped = true;
+        const correct = bin.dataset.type === def.type;
+        flyToBin(el, bin, def, correct);
+      }
+    });
+
+    if (!dropped) {
+      el.style.animation = '';
+      el.style.right     = 'auto';
+      const curTop = parseInt(el.style.top);
+      const desktop = document.getElementById('desktop');
+      const remaining = (desktop.offsetHeight - curTop) / desktop.offsetHeight;
+      el.style.setProperty('--dur', (remaining * 8) + 's');
+      el.style.animation = 'fallDown var(--dur) linear forwards';
+    }
+  }
+
+  /* ── Mouse events ── */
+  el.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    startDrag(e.clientX, e.clientY);
+
+    const onMove = (mv) => moveDrag(mv.clientX, mv.clientY);
+    const onUp   = (up) => {
+      endDrag(up.clientX, up.clientY);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      bins.forEach(b => b.classList.remove('bin-hover-correct','bin-hover-wrong'));
-
-      let dropped = false;
-      bins.forEach(bin => {
-        const br = bin.getBoundingClientRect();
-        if (up.clientX >= br.left && up.clientX <= br.right &&
-            up.clientY >= br.top  && up.clientY <= br.bottom) {
-          dropped = true;
-          const correct = bin.dataset.type === def.type;
-          flyToBin(el, bin, def, correct);
-        }
-      });
-
-      if (!dropped) {
-        // Resume falling from current position
-        el.style.animation = '';
-        el.style.right     = 'auto';
-        const curTop = parseInt(el.style.top);
-        const desktop = document.getElementById('desktop');
-        const remaining = (desktop.offsetHeight - curTop) / desktop.offsetHeight;
-        el.style.setProperty('--dur', (remaining * 8) + 's');
-        el.style.animation = 'fallDown var(--dur) linear forwards';
-      }
     };
-
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
+
+  /* ── Touch events ── */
+  el.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const t = e.touches[0];
+    startDrag(t.clientX, t.clientY);
+  }, { passive: false });
+
+  el.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    moveDrag(t.clientX, t.clientY);
+  }, { passive: false });
+
+  el.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    endDrag(t.clientX, t.clientY);
+  }, { passive: false });
 }
 
 function flyToBin(el, bin, def, correct) {
@@ -884,6 +1016,7 @@ function flyToBin(el, bin, def, correct) {
     if (correct) {
       if (def.type === 'recycle') { recycleCount++; updateBinCount('recycle-count', recycleCount); }
       else                        { trashCount++;   updateBinCount('trash-count',   trashCount);   }
+      updateMobileGameScore();
     } else {
       missedCount++;
       updateCounter();
@@ -916,6 +1049,12 @@ function updateCounter() {
     c.classList.toggle('counter-warning', missedCount >= 5);
     c.classList.toggle('counter-danger',  missedCount >= 15);
   }
+}
+
+function updateMobileGameScore() {
+  const total = recycleCount + trashCount;
+  const el = document.getElementById('mobile-game-score');
+  if (el) el.textContent = total + (total === 1 ? ' sorted' : ' sorted');
 }
 
 function initBins() {
@@ -952,23 +1091,58 @@ function initFieldTips() {
   const box = document.getElementById('field-tip-box');
   if (!box) return;
 
+  const isMobile = window.innerWidth <= 768;
+  let activeTipBtn = null;
+
   document.querySelectorAll('.field-help[data-tip-key]').forEach(btn => {
     const key = btn.dataset.tipKey;
 
-    btn.addEventListener('mouseenter', () => {
-      const text = TIP_TEXT[key];
-      if (!text) return;
-      box.textContent = text;
-      box.style.display = 'block';
-      positionTip(btn, box);
-    });
+    if (isMobile) {
+      /* ── Mobile: tap to toggle ── */
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const text = TIP_TEXT[key];
+        if (!text) return;
 
-    btn.addEventListener('mouseleave', () => {
-      box.style.display = 'none';
-    });
+        if (activeTipBtn === btn && box.style.display === 'block') {
+          box.style.display = 'none';
+          activeTipBtn = null;
+          return;
+        }
+        activeTipBtn = btn;
+        box.textContent = text;
+        box.style.display = 'block';
+        // Mobile: position is handled by CSS (bottom-anchored)
+        box.style.left = '';
+        box.style.top  = '';
+      });
 
-    // Also hide if button scrolls away
-    btn.addEventListener('mousemove', () => positionTip(btn, box));
+      // Close tip on outside tap
+      document.addEventListener('touchstart', (e) => {
+        if (!btn.contains(e.target) && !box.contains(e.target)) {
+          if (activeTipBtn === btn) {
+            box.style.display = 'none';
+            activeTipBtn = null;
+          }
+        }
+      }, { passive: true });
+
+    } else {
+      /* ── Desktop: hover ── */
+      btn.addEventListener('mouseenter', () => {
+        const text = TIP_TEXT[key];
+        if (!text) return;
+        box.textContent = text;
+        box.style.display = 'block';
+        positionTip(btn, box);
+      });
+
+      btn.addEventListener('mouseleave', () => {
+        box.style.display = 'none';
+      });
+
+      btn.addEventListener('mousemove', () => positionTip(btn, box));
+    }
   });
 }
 

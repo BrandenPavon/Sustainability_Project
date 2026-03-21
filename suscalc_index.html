@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a52a8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>SusCalc</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -30,15 +34,6 @@
     <span class="leaf-deco">🍀</span>
     <span class="leaf-deco">🌱</span>
 
-    <!-- =====================================================
-         WINDOWS — Add new windows here following this pattern:
-         <div class="xp-window" id="win-YOURNAME" data-title="Window Title" data-icon="🔤" style="left:Xpx; top:Ypx; width:Wpx;">
-           <div class="window-body">
-             ... your content ...
-           </div>
-         </div>
-    ====================================================== -->
-
     <!-- WINDOW: Calculator -->
     <div class="xp-window" id="win-calc" data-title="SusCalc — Carbon Footprint Calculator" data-icon="🌿" style="left:80px; top:40px; width:700px;">
       <div class="window-body">
@@ -65,8 +60,6 @@
 
         <div class="glass-panel">
           <form id="susCalcForm">
-
-            <!-- Each field: slider + number fallback side by side -->
 
             <div class="field-group" data-field="showerMinutes">
               <label>🚿 Average shower minutes per day<button type="button" class="field-help" data-tip-key="shower" aria-label="Help">?</button></label>
@@ -276,25 +269,14 @@
         <!-- Eco Histogram -->
         <div id="histogram" style="display:none; margin-top:14px;">
           <div class="glass-panel">
-
-            <!-- Header / toggle -->
             <div class="histo-header" id="histoToggle">
               <span class="histo-title">📊 Eco Histogram</span>
               <span class="histo-chevron" id="histoChevron">▼</span>
             </div>
-
-            <!-- Saving badge -->
             <div class="histo-saving" id="histoSaving"></div>
-
-            <!-- Bar chart (always visible when histogram shown) -->
             <div class="histo-detail" id="histoDetail" style="display:block;">
-              <!-- legend injected above by JS -->
-              <div class="histo-detail-grid" id="histoGrid">
-                <!-- Bar columns injected by JS -->
-              </div>
-              <!-- Tooltip panel injected by JS below grid -->
+              <div class="histo-detail-grid" id="histoGrid"></div>
             </div>
-
           </div>
         </div>
 
@@ -340,15 +322,12 @@
       </div>
     </div>
 
-
     <!-- WINDOW: Eco Resources -->
-    <div class="xp-window" id="win-resources" data-title="Eco Resources & Links" data-icon="🌱" style="left:1210px; top:60px; width:380px;"">
+    <div class="xp-window" id="win-resources" data-title="Eco Resources & Links" data-icon="🌱" style="left:1210px; top:60px; width:380px;">
       <div class="window-body">
         <h1><span class="leaf-icon">🌱</span> Eco Resources</h1>
         <p class="subtitle">Trusted links and tools to help you live more sustainably.</p>
 
-
-        <!-- ── Food & Diet ── -->
         <div class="glass-panel" style="margin-bottom:10px;">
           <p style="margin-bottom:8px;"><strong>🥦 Food & Diet</strong></p>
           <div class="row"><a href="https://www.meatfreemondays.com" target="_blank">🥗 Meat Free Mondays</a><span>Recipes & meal ideas</span></div>
@@ -357,7 +336,6 @@
           <div class="row"><a href="https://ourworldindata.org/food-choice-vs-eating-local" target="_blank">📈 Our World in Data</a><span>Food emissions by type</span></div>
         </div>
 
-        <!-- ── Transport ── -->
         <div class="glass-panel" style="margin-bottom:10px;">
           <p style="margin-bottom:8px;"><strong>🚗 Transport</strong></p>
           <div class="row"><a href="https://www.eea.europa.eu/highlights/co2-emissions-from-passenger-transport" target="_blank">✈️ EEA Transport Emissions</a><span>Compare modes of travel</span></div>
@@ -366,7 +344,6 @@
           <div class="row"><a href="https://atmosfair.de/en" target="_blank">🛫 Atmosfair</a><span>Flight offset calculator</span></div>
         </div>
 
-        <!-- ── Home & Energy ── -->
         <div class="glass-panel" style="margin-bottom:10px;">
           <p style="margin-bottom:8px;"><strong>🏠 Home & Energy</strong></p>
           <div class="row"><a href="https://www.energy.gov/energysaver/energy-saver" target="_blank">⚡ Energy.gov Saver</a><span>Home efficiency tips</span></div>
@@ -375,7 +352,6 @@
           <div class="row"><a href="https://www.ovo.com/green-living" target="_blank">🔋 OVO Green Living</a><span>Smart home guides</span></div>
         </div>
 
-        <!-- ── Fashion & Shopping ── -->
         <div class="glass-panel" style="margin-bottom:10px;">
           <p style="margin-bottom:8px;"><strong>👕 Fashion & Shopping</strong></p>
           <div class="row"><a href="https://www.goodonyou.eco" target="_blank">✅ Good On You</a><span>Brand ethics ratings</span></div>
@@ -384,7 +360,6 @@
           <div class="row"><a href="https://www.fashionrevolution.org" target="_blank">✊ Fashion Revolution</a><span>Who made your clothes?</span></div>
         </div>
 
-        <!-- ── Offset & Give ── -->
         <div class="glass-panel" style="margin-bottom:10px;">
           <p style="margin-bottom:8px;"><strong>🌳 Offset & Give Back</strong></p>
           <div class="row"><a href="https://www.goldstandard.org" target="_blank">🥇 Gold Standard</a><span>Verified carbon offsets</span></div>
@@ -393,7 +368,6 @@
           <div class="row"><a href="https://www.givingwhatwecan.org/en/cause-areas/climate-change" target="_blank">💚 Giving What We Can</a><span>Effective climate giving</span></div>
         </div>
 
-        <!-- ── Learn More ── -->
         <div class="glass-panel" style="margin-bottom:10px;">
           <p style="margin-bottom:8px;"><strong>📚 Learn More</strong></p>
           <div class="row"><a href="https://drawdown.org" target="_blank">📉 Project Drawdown</a><span>Top climate solutions ranked</span></div>
@@ -412,6 +386,7 @@
         </div>
       </div>
     </div>
+
     <!-- WINDOW: Tips -->
     <div class="xp-window" id="win-tips" data-start-hidden="true" data-title="Eco Tips" data-icon="💡" style="left:820px; top:420px; width:360px;">
       <div class="window-body">
@@ -429,20 +404,14 @@
       </div>
     </div>
 
-    <!-- =====================================================
-         ADD MORE WINDOWS ABOVE THIS LINE
-    ====================================================== -->
-
     <!-- Falling items container -->
     <div id="falling-zone"></div>
 
-    <!-- Bins row — TOP RIGHT -->
+    <!-- Bins row -->
     <div id="bins-row">
-
-      <!-- Recycle Bin (Blue) -->
       <div class="desktop-bin" id="recycle-bin" data-type="recycle" title="Recycle Bin">
         <div class="bin-icon" id="recycle-icon">♻️</div>
-        <div class="bin-label">Recycle Bin</div>
+        <div class="bin-label">Recycle</div>
         <div class="bin-count" id="recycle-count"></div>
         <div class="bin-tooltip">
           <strong>♻️ Accepted:</strong><br>
@@ -453,8 +422,6 @@
           <em>Must be clean &amp; dry!</em>
         </div>
       </div>
-
-      <!-- Trash Bin (Black) -->
       <div class="desktop-bin" id="trash-bin" data-type="trash" title="Trash Bin">
         <div class="bin-icon" id="trash-icon">🗑️</div>
         <div class="bin-label">Trash</div>
@@ -468,7 +435,16 @@
           <em>No recyclables!</em>
         </div>
       </div>
+    </div>
 
+    <!-- Mobile game overlay (shown only in game tab) -->
+    <div id="mobile-game-overlay" style="display:none;">
+      <div class="mobile-game-header">
+        <span style="font-size:20px;">♻️</span>
+        <span>Sort the falling items!</span>
+        <span id="mobile-game-score">0 sorted</span>
+      </div>
+      <div class="mobile-game-hint">Drag items to the correct bin ↑</div>
     </div>
 
   </div><!-- /desktop -->
@@ -479,8 +455,33 @@
       <span class="start-leaf">🌿</span>
     </div>
     <div id="taskbar-windows">
-      <!-- Taskbar buttons are injected by WindowManager -->
+      <!-- Taskbar buttons injected by WindowManager -->
     </div>
+
+    <!-- Mobile navigation tabs (hidden on desktop) -->
+    <div id="mobile-nav">
+      <button class="mobile-tab" data-win="win-calc">
+        <span class="tab-icon">🌿</span>
+        <span class="tab-label">Calc</span>
+      </button>
+      <button class="mobile-tab" data-win="win-about">
+        <span class="tab-icon">ℹ️</span>
+        <span class="tab-label">About</span>
+      </button>
+      <button class="mobile-tab" data-win="win-resources">
+        <span class="tab-icon">🌱</span>
+        <span class="tab-label">Links</span>
+      </button>
+      <button class="mobile-tab" data-win="win-tips">
+        <span class="tab-icon">💡</span>
+        <span class="tab-label">Tips</span>
+      </button>
+      <button class="mobile-tab" data-win="game">
+        <span class="tab-icon">♻️</span>
+        <span class="tab-label">Game</span>
+      </button>
+    </div>
+
     <span class="taskbar-clock" id="taskbarClock"></span>
     <div id="trash-counter"><span id="trash-counter-icon">♻️</span><span id="trash-counter-num">0</span><span id="trash-counter-label"> missed</span></div>
   </div>

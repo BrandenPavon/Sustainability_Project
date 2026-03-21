@@ -1192,3 +1192,352 @@ hr { border: none; border-top: 2px solid var(--hr-color); margin: 8px 0; }
   0%  {opacity:1;transform:translateX(-50%) translateY(0);}
   100%{opacity:0;transform:translateX(-50%) translateY(-28px);}
 }
+
+
+/* =====================================================
+   MOBILE RESPONSIVE ADAPTATIONS
+   max-width: 768px
+   ===================================================== */
+
+:root {
+  --mobile-nav-h: 58px;
+}
+
+/* Mobile nav hidden on desktop */
+#mobile-nav { display: none; }
+
+@media (max-width: 768px) {
+
+  /* ── Root override for taskbar height ── */
+  :root {
+    --taskbar-h: var(--mobile-nav-h);
+  }
+
+  /* ── Desktop canvas ── */
+  #desktop {
+    inset: 0 0 var(--mobile-nav-h) 0;
+  }
+
+  /* ── Leaf decorations — subtler on small screens ── */
+  .leaf-deco {
+    font-size: 18px;
+    opacity: 0.08;
+  }
+
+  /* ── Windows become full-screen overlays ── */
+  .xp-window {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - var(--mobile-nav-h)) !important;
+    max-height: calc(100vh - var(--mobile-nav-h)) !important;
+    border-radius: 0 !important;
+    display: none !important;
+    z-index: 200 !important;
+    transform: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    transition: none !important;
+  }
+
+  .xp-window.mobile-visible {
+    display: flex !important;
+    animation: mobileSlideUp 0.22s ease-out forwards !important;
+  }
+
+  @keyframes mobileSlideUp {
+    from { opacity: 0.5; transform: translateY(18px); }
+    to   { opacity: 1;   transform: translateY(0); }
+  }
+
+  /* Override minimized states — not relevant on mobile */
+  .xp-window.minimized {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  /* ── Title bar ── */
+  .title-bar {
+    cursor: default !important;
+    padding: 9px 12px;
+    touch-action: none;
+  }
+  .title-bar-text { font-size: 13px; }
+  .tb-btn.minimize { display: none !important; }
+
+  /* ── Window body ── */
+  .window-body {
+    padding: 14px 16px 24px;
+    max-height: calc(100vh - var(--mobile-nav-h) - 42px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* ── Taskbar → mobile chrome ── */
+  #taskbar {
+    height: var(--mobile-nav-h);
+    padding: 0;
+    gap: 0;
+    justify-content: stretch;
+  }
+  .start-btn          { display: none !important; }
+  .taskbar-clock      { display: none !important; }
+  #taskbar-windows    { display: none !important; }
+  #trash-counter {
+    position: absolute;
+    top: -28px;
+    right: 8px;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    z-index: 9999;
+  }
+
+  /* ── Mobile nav tabs ── */
+  #mobile-nav {
+    display: flex !important;
+    flex: 1;
+    height: 100%;
+    align-items: stretch;
+  }
+  .mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px 4px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-family: 'Tahoma', 'Trebuchet MS', sans-serif;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    border-top: 3px solid transparent;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .mobile-tab .tab-icon  { font-size: 22px; line-height: 1; display: block; }
+  .mobile-tab .tab-label { display: block; text-transform: uppercase; }
+  .mobile-tab.active {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.28);
+    border-top-color: #8fd88f;
+  }
+  .mobile-tab:active { background: rgba(0, 0, 0, 0.38); }
+
+  /* ── Start menu — hidden on mobile ── */
+  #start-menu { display: none !important; }
+
+  /* ── Calculator toolbar ── */
+  .calc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .toolbar-btn {
+    padding: 9px 14px;
+    font-size: 12px;
+    justify-content: center;
+    border-radius: 6px;
+  }
+  .toolbar-sep { display: none !important; }
+  .input-mode-toggle {
+    margin-left: 0;
+    justify-content: space-between;
+  }
+  .toggle-label { font-size: 12px; }
+  .toggle-opt   { padding: 6px 16px; font-size: 12px; }
+
+  /* ── Field groups ── */
+  .field-group { margin-bottom: 16px; }
+  label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .field-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  /* Preset pills — horizontal scroll */
+  .preset-pills {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding-bottom: 4px;
+    /* hide scrollbar */
+    scrollbar-width: none;
+  }
+  .preset-pills::-webkit-scrollbar { display: none; }
+
+  .pill {
+    padding: 9px 14px;
+    font-size: 12px;
+    min-width: 58px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .pill small { font-size: 10px; }
+
+  /* Slider — full width, larger thumb */
+  .slider-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    gap: 6px;
+    flex: none;
+  }
+  .xp-slider {
+    height: 10px;
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+  .xp-slider::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+  }
+  .xp-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+  .slider-val {
+    text-align: center;
+    font-size: 13px;
+    padding: 5px 8px;
+    min-width: 0;
+  }
+
+  /* Precise input */
+  .precise-wrap { flex-direction: row; align-items: center; gap: 8px; }
+  .precise-input {
+    max-width: 100%;
+    flex: 1;
+    font-size: 16px; /* prevent iOS zoom */
+    padding: 9px 10px;
+  }
+  .precise-unit { font-size: 12px; flex-shrink: 0; }
+
+  /* ── Calculate button ── */
+  .xp-button {
+    width: 100%;
+    justify-content: center;
+    padding: 13px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* ── Results ── */
+  #results h2 { font-size: 15px; }
+  .row { font-size: 12px; }
+  .row strong { min-width: 110px; font-size: 11px; }
+  .row span   { font-size: 11px; }
+
+  /* ── Eco Histogram ── */
+  .histo-detail-grid {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    min-width: min-content !important;
+  }
+
+  /* ── Page headings ── */
+  h1 { font-size: 19px; }
+  .subtitle { font-size: 12px; margin-bottom: 12px; }
+  .glass-panel { padding: 14px 16px; }
+
+  /* ── Bins — float above mobile nav, smaller ── */
+  #bins-row {
+    position: fixed;
+    bottom: calc(var(--mobile-nav-h) + 8px);
+    right: 8px;
+    top: auto;
+    gap: 8px;
+    z-index: 190; /* below windows, above desktop */
+  }
+  .desktop-bin { width: 52px; }
+  .bin-icon    { font-size: 28px; }
+  .bin-label   { font-size: 10px; }
+  /* No hover tooltips on mobile */
+  .bin-tooltip { display: none !important; }
+
+  /* ── Mobile game overlay ── */
+  #mobile-game-overlay {
+    position: fixed;
+    top: 8px;
+    left: 0;
+    right: 0;
+    padding: 8px 16px;
+    z-index: 191;
+    pointer-events: none;
+  }
+  #mobile-game-overlay.visible { display: flex !important; }
+  .mobile-game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(20, 40, 20, 0.75);
+    border: 1px solid rgba(100, 200, 100, 0.35);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: #d8f8d8;
+    font-family: 'Tahoma', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    backdrop-filter: blur(8px);
+    width: 100%;
+  }
+  #mobile-game-score { color: #8fd88f; }
+  .mobile-game-hint {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    margin-top: 4px;
+    font-family: 'Tahoma', sans-serif;
+  }
+
+  /* ── Falling items — larger on mobile for easier tapping ── */
+  .fall-item { cursor: grab; }
+  .fi-label  { font-size: 10px; }
+
+  /* ── Field tip box — bottom-anchored on mobile ── */
+  #field-tip-box {
+    position: fixed !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    top: auto !important;
+    bottom: calc(var(--mobile-nav-h) + 14px) !important;
+    max-width: 92vw;
+    font-size: 12px;
+    line-height: 1.6;
+    z-index: 999999;
+  }
+
+  /* ── Resource rows on mobile ── */
+  .row a {
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+}
+
+/* Slightly wider breakpoint for tablet landscape */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .xp-window { max-width: 96vw; }
+}
