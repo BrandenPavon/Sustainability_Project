@@ -8,143 +8,430 @@
 </head>
 <body>
 
-  <!-- Floating leaf decorations -->
-  <span class="leaf-deco">🍃</span>
-  <span class="leaf-deco">🌿</span>
-  <span class="leaf-deco">🍀</span>
-  <span class="leaf-deco">🌱</span>
+  <!-- Boot Screen -->
+  <div id="boot-screen">
+    <div class="boot-content">
+      <div class="boot-leaf">🌿</div>
+      <div class="boot-title">SusCalcOS</div>
+      <div class="boot-subtitle">Carbon Footprint Edition</div>
+      <div class="boot-bar-wrap">
+        <div class="boot-bar"></div>
+      </div>
+      <div class="boot-copy">Copyright &copy; 2025 SusCalc Inc. All rights reserved.</div>
+    </div>
+  </div>
 
-  <!-- Main XP-style window -->
-  <div class="window">
+  <!-- Desktop -->
+  <div id="desktop">
 
-    <!-- Title bar -->
-    <div class="title-bar">
-      <span class="title-bar-icon">🌿</span>
-      <span class="title-bar-text">SusCalc — Carbon Footprint Calculator</span>
-      <div class="title-bar-buttons">
-        <div class="tb-btn minimize">_</div>
-        <div class="tb-btn maximize">□</div>
-        <div class="tb-btn close">✕</div>
+    <!-- Floating leaf decorations -->
+    <span class="leaf-deco">🍃</span>
+    <span class="leaf-deco">🌿</span>
+    <span class="leaf-deco">🍀</span>
+    <span class="leaf-deco">🌱</span>
+
+    <!-- =====================================================
+         WINDOWS — Add new windows here following this pattern:
+         <div class="xp-window" id="win-YOURNAME" data-title="Window Title" data-icon="🔤" style="left:Xpx; top:Ypx; width:Wpx;">
+           <div class="window-body">
+             ... your content ...
+           </div>
+         </div>
+    ====================================================== -->
+
+    <!-- WINDOW: Calculator -->
+    <div class="xp-window" id="win-calc" data-title="SusCalc — Carbon Footprint Calculator" data-icon="🌿" style="left:80px; top:40px; width:700px;">
+      <div class="window-body">
+        <h1><span class="leaf-icon">🌍</span> SusCalc</h1>
+        <p class="subtitle">Enter your daily habits below to calculate your estimated annual CO₂ impact.</p>
+
+        <!-- ── Toolbar ── -->
+        <div class="calc-toolbar">
+          <button type="button" class="toolbar-btn" id="btnReset" title="Set all fields to zero">
+            🗑️ Reset to Zero
+          </button>
+          <button type="button" class="toolbar-btn" id="btnAverage" title="Fill with average developed-country values">
+            🌍 Load Avg. (Developed Country)
+          </button>
+          <div class="toolbar-sep"></div>
+          <div class="input-mode-toggle">
+            <span class="toggle-label">Input mode:</span>
+            <div class="toggle-group" id="inputModeToggle">
+              <button class="toggle-opt active" data-mode="slider">🎚️ Sliders</button>
+              <button class="toggle-opt"         data-mode="number">✏️ Precise</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel">
+          <form id="susCalcForm">
+
+            <!-- Each field: slider + number fallback side by side -->
+
+            <div class="field-group" data-field="showerMinutes">
+              <label>🚿 Average shower minutes per day<button type="button" class="field-help" data-tip-key="shower" aria-label="Help">?</button></label>
+              <div class="field-row">
+                <div class="preset-pills" data-field="showerMinutes">
+                  <button type="button" class="pill" data-value="4">4 min<br><small>Eco</small></button>
+                  <button type="button" class="pill" data-value="8">8 min<br><small>Avg</small></button>
+                  <button type="button" class="pill" data-value="15">15 min<br><small>Long</small></button>
+                </div>
+                <div class="slider-wrap mode-slider">
+                  <input type="range" class="xp-slider" id="showerMinutes" min="0" max="60" step="0.5" value="8">
+                  <span class="slider-val">8 min/day</span>
+                </div>
+                <div class="precise-wrap mode-number" style="display:none;">
+                  <input type="number" class="precise-input" id="showerMinutesNum" min="0" max="120" step="0.1" value="8" placeholder="0–120">
+                  <span class="precise-unit">min/day</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group" data-field="redMeat">
+              <label>🥩 Red meat meals per week<button type="button" class="field-help" data-tip-key="meat" aria-label="Help">?</button></label>
+              <div class="field-row">
+                <div class="preset-pills" data-field="redMeat">
+                  <button type="button" class="pill" data-value="0">0<br><small>Vegan</small></button>
+                  <button type="button" class="pill" data-value="2">2<br><small>Low</small></button>
+                  <button type="button" class="pill" data-value="5">5<br><small>Avg</small></button>
+                  <button type="button" class="pill" data-value="14">14<br><small>Daily</small></button>
+                </div>
+                <div class="slider-wrap mode-slider">
+                  <input type="range" class="xp-slider" id="redMeat" min="0" max="21" step="1" value="5">
+                  <span class="slider-val">5 meals/wk</span>
+                </div>
+                <div class="precise-wrap mode-number" style="display:none;">
+                  <input type="number" class="precise-input" id="redMeatNum" min="0" max="50" step="1" value="5" placeholder="0–50">
+                  <span class="precise-unit">meals/wk</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group" data-field="carMiles">
+              <label>🚗 Car miles driven per week<button type="button" class="field-help" data-tip-key="car" aria-label="Help">?</button></label>
+              <div class="field-row">
+                <div class="preset-pills" data-field="carMiles">
+                  <button type="button" class="pill" data-value="0">0<br><small>No car</small></button>
+                  <button type="button" class="pill" data-value="100">100<br><small>Low</small></button>
+                  <button type="button" class="pill" data-value="230">230<br><small>Avg</small></button>
+                  <button type="button" class="pill" data-value="500">500<br><small>High</small></button>
+                </div>
+                <div class="slider-wrap mode-slider">
+                  <input type="range" class="xp-slider" id="carMiles" min="0" max="700" step="5" value="230">
+                  <span class="slider-val">230 mi/wk</span>
+                </div>
+                <div class="precise-wrap mode-number" style="display:none;">
+                  <input type="number" class="precise-input" id="carMilesNum" min="0" max="5000" step="1" value="230" placeholder="0–5000">
+                  <span class="precise-unit">mi/wk</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group" data-field="flights">
+              <label>✈️ Flights per year<button type="button" class="field-help" data-tip-key="flight" aria-label="Help">?</button></label>
+              <div class="field-row">
+                <div class="preset-pills" data-field="flights">
+                  <button type="button" class="pill" data-value="0">0<br><small>None</small></button>
+                  <button type="button" class="pill" data-value="2">2<br><small>Holiday</small></button>
+                  <button type="button" class="pill" data-value="6">6<br><small>Avg</small></button>
+                  <button type="button" class="pill" data-value="20">20<br><small>Frequent</small></button>
+                </div>
+                <div class="slider-wrap mode-slider">
+                  <input type="range" class="xp-slider" id="flights" min="0" max="40" step="1" value="6">
+                  <span class="slider-val">6 flights/yr</span>
+                </div>
+                <div class="precise-wrap mode-number" style="display:none;">
+                  <input type="number" class="precise-input" id="flightsNum" min="0" max="100" step="1" value="6" placeholder="0–100">
+                  <span class="precise-unit">flights/yr</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group" data-field="fashion">
+              <label>👕 Fast fashion items per month<button type="button" class="field-help" data-tip-key="fashion" aria-label="Help">?</button></label>
+              <div class="field-row">
+                <div class="preset-pills" data-field="fashion">
+                  <button type="button" class="pill" data-value="0">0<br><small>None</small></button>
+                  <button type="button" class="pill" data-value="2">2<br><small>Low</small></button>
+                  <button type="button" class="pill" data-value="5">5<br><small>Avg</small></button>
+                  <button type="button" class="pill" data-value="15">15<br><small>High</small></button>
+                </div>
+                <div class="slider-wrap mode-slider">
+                  <input type="range" class="xp-slider" id="fashion" min="0" max="30" step="1" value="5">
+                  <span class="slider-val">5 items/mo</span>
+                </div>
+                <div class="precise-wrap mode-number" style="display:none;">
+                  <input type="number" class="precise-input" id="fashionNum" min="0" max="100" step="1" value="5" placeholder="0–100">
+                  <span class="precise-unit">items/mo</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="xp-button">🌿 Calculate Impact</button>
+            </div>
+
+          </form>
+        </div>
+
+        <div id="status"></div>
+
+        <div id="results">
+          <div class="glass-panel">
+            <h2>📊 Results</h2>
+            <div class="row"><strong>🚿 Showers:</strong>      <span id="showerCO2"></span> kg CO₂/yr</div>
+            <div class="row"><strong>🥩 Red Meat:</strong>     <span id="meatCO2"></span> kg CO₂/yr</div>
+            <div class="row"><strong>🚗 Car Travel:</strong>   <span id="carCO2"></span> kg CO₂/yr</div>
+            <div class="row"><strong>✈️ Flights:</strong>      <span id="flightCO2"></span> kg CO₂/yr</div>
+            <div class="row"><strong>👕 Fast Fashion:</strong> <span id="fashionCO2"></span> kg CO₂/yr</div>
+            <hr>
+            <div class="row"><strong>🌍 Total (kg):</strong>      <span id="totalCO2"></span> kg CO₂/yr</div>
+            <div class="row"><strong>🌍 Total (tons):</strong>    <span id="totalTons"></span> tons CO₂/yr</div>
+            <div class="row"><strong>⚠️ Biggest impact:</strong>  <span id="biggestCategory"></span></div>
+            <div class="row"><strong>💡 Best suggestion:</strong> <span id="recommendation"></span></div>
+          </div>
+        </div>
+
+        <!-- Eco Histogram -->
+        <div id="histogram" style="display:none; margin-top:14px;">
+          <div class="glass-panel">
+
+            <!-- Header / toggle -->
+            <div class="histo-header" id="histoToggle">
+              <span class="histo-title">📊 Eco Histogram</span>
+              <span class="histo-chevron" id="histoChevron">▼</span>
+            </div>
+
+            <!-- Saving badge -->
+            <div class="histo-saving" id="histoSaving"></div>
+
+            <!-- Bar chart (always visible when histogram shown) -->
+            <div class="histo-detail" id="histoDetail" style="display:block;">
+              <!-- legend injected above by JS -->
+              <div class="histo-detail-grid" id="histoGrid">
+                <!-- Bar columns injected by JS -->
+              </div>
+              <!-- Tooltip panel injected by JS below grid -->
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- Window content -->
-    <div class="window-body">
-
-      <h1><span class="leaf-icon">🌍</span> SusCalc</h1>
-      <p class="subtitle">Enter your daily habits below to calculate your estimated annual CO₂ impact.</p>
-
-      <!-- Form -->
-      <div class="glass-panel">
-        <form id="susCalcForm">
-
-          <div class="field-group">
-            <label for="showerMinutes">🚿 Average shower minutes per day (0–120):</label>
-            <input
-              type="number"
-              id="showerMinutes"
-              name="showerMinutesPerDay"
-              min="0"
-              max="120"
-              step="0.1"
-              required
-            >
-          </div>
-
-          <div class="field-group">
-            <label for="redMeat">🥩 Red meat meals per week (0–50):</label>
-            <input
-              type="number"
-              id="redMeat"
-              name="redMeatMealsPerWeek"
-              min="0"
-              max="50"
-              step="1"
-              required
-            >
-          </div>
-
-          <div class="field-group">
-            <label for="carMiles">🚗 Car miles driven per week (0–5000):</label>
-            <input
-              type="number"
-              id="carMiles"
-              name="carMilesPerWeek"
-              min="0"
-              max="5000"
-              step="0.1"
-              required
-            >
-          </div>
-
-          <div class="field-group">
-            <label for="flights">✈️ Flights per year (0–100):</label>
-            <input
-              type="number"
-              id="flights"
-              name="flightsPerYear"
-              min="0"
-              max="100"
-              step="1"
-              required
-            >
-          </div>
-
-          <div class="field-group">
-            <label for="fashion">👕 Fast fashion items bought per month (0–100):</label>
-            <input
-              type="number"
-              id="fashion"
-              name="fashionItemsPerMonth"
-              min="0"
-              max="100"
-              step="1"
-              required
-            >
-          </div>
-
-          <button type="submit" class="xp-button">
-            🌿 Calculate Impact
-          </button>
-
-        </form>
-      </div>
-
-      <!-- Status -->
-      <div id="status"></div>
-
-      <!-- Results -->
-      <div id="results">
+    <!-- WINDOW: About -->
+    <div class="xp-window" id="win-about" data-title="About SusCalc" data-icon="ℹ️" style="left:820px; top:60px; width:360px;">
+      <div class="window-body">
+        <h1><span class="leaf-icon">ℹ️</span> About</h1>
         <div class="glass-panel">
-          <h2>📊 Results</h2>
-
-          <div class="row"><strong>🚿 Showers:</strong>   <span id="showerCO2"></span> kg CO₂/yr</div>
-          <div class="row"><strong>🥩 Red Meat:</strong>  <span id="meatCO2"></span>   kg CO₂/yr</div>
-          <div class="row"><strong>🚗 Car Travel:</strong><span id="carCO2"></span>    kg CO₂/yr</div>
-          <div class="row"><strong>✈️ Flights:</strong>   <span id="flightCO2"></span> kg CO₂/yr</div>
-          <div class="row"><strong>👕 Fast Fashion:</strong><span id="fashionCO2"></span> kg CO₂/yr</div>
-
+          <p style="margin-bottom:12px;">
+            <strong>SusCalc v1.0</strong> is a carbon footprint calculator designed to help you understand
+            the annual CO₂ impact of your everyday habits.
+          </p>
+          <p style="margin-bottom:12px;">
+            Simply fill in the Calculator window with your daily routines and hit
+            <em>Calculate Impact</em> to see a full breakdown.
+          </p>
           <hr>
+          <p style="margin-bottom:8px;"><strong>📐 How we calculate:</strong></p>
+          <div class="row"><strong>🚿 Shower</strong> <span>0.05 kg per min/yr</span></div>
+          <div class="row"><strong>🥩 Red Meat</strong> <span>3.0 kg per meal</span></div>
+          <div class="row"><strong>🚗 Car</strong> <span>0.21 kg per mile</span></div>
+          <div class="row"><strong>✈️ Flight</strong> <span>255 kg per flight</span></div>
+          <div class="row"><strong>👕 Fashion</strong> <span>7.0 kg per item</span></div>
+          <hr>
+          <p style="font-size:11px; opacity:0.7; margin-top:8px;">
+            Emission factors sourced from publicly available lifecycle assessment data.
+            Results are estimates for educational purposes.
+          </p>
+        </div>
+        <div style="margin-top:14px; text-align:center;">
+          <span style="font-size:32px;">🌍</span>
+          <p style="font-size:11px; color:var(--text-mid); margin-top:4px;">Made with 💚 for the planet</p>
+        </div>
+      </div>
+    </div>
+    <!-- WINDOW: Eco Resources -->
+    <div class="xp-window" id="win-resources" data-title="Eco Resources & Links" data-icon="🌱" style="left:1210px; top:60px; width:380px;"">
+      <div class="window-body">
+        <h1><span class="leaf-icon">🌱</span> Eco Resources</h1>
+        <p class="subtitle">Trusted links and tools to help you live more sustainably.</p>
 
-          <div class="row"><strong>🌍 Total (kg):</strong>       <span id="totalCO2"></span> kg CO₂/yr</div>
-          <div class="row"><strong>🌍 Total (tons):</strong>     <span id="totalTons"></span> tons CO₂/yr</div>
-          <div class="row"><strong>⚠️ Biggest impact:</strong>   <span id="biggestCategory"></span></div>
-          <div class="row"><strong>💡 Best suggestion:</strong>  <span id="recommendation"></span></div>
+        <!-- ── Carbon Footprint Tools ── -->
+        <div class="glass-panel" style="margin-bottom:10px;">
+          <p style="margin-bottom:8px;"><strong>📊 Calculate & Track</strong></p>
+          <div class="row"><a href="https://www.carbonfootprint.com/calculator.aspx" target="_blank">🌍 CarbonFootprint.com</a><span>Full lifestyle calculator</span></div>
+          <div class="row"><a href="https://footprint.wwf.org.uk" target="_blank">🐼 WWF Footprint Calculator</a><span>UK-based, very detailed</span></div>
+          <div class="row"><a href="https://www.epa.gov/ghgemissions/household-carbon-footprint-calculator" target="_blank">🏛️ EPA Household Calculator</a><span>US-focused</span></div>
+          <div class="row"><a href="https://coolclimate.berkeley.edu/calculator" target="_blank">🎓 Berkeley CoolClimate</a><span>Research-grade tool</span></div>
+        </div>
+
+        <!-- ── Food & Diet ── -->
+        <div class="glass-panel" style="margin-bottom:10px;">
+          <p style="margin-bottom:8px;"><strong>🥦 Food & Diet</strong></p>
+          <div class="row"><a href="https://www.meatfreemondays.com" target="_blank">🥗 Meat Free Mondays</a><span>Recipes & meal ideas</span></div>
+          <div class="row"><a href="https://www.seasonalfoodguide.org" target="_blank">🍅 Seasonal Food Guide</a><span>Eat local & in-season</span></div>
+          <div class="row"><a href="https://www.lovefoodhatewaste.com" target="_blank">♻️ Love Food Hate Waste</a><span>Cut food waste</span></div>
+          <div class="row"><a href="https://ourworldindata.org/food-choice-vs-eating-local" target="_blank">📈 Our World in Data</a><span>Food emissions by type</span></div>
+        </div>
+
+        <!-- ── Transport ── -->
+        <div class="glass-panel" style="margin-bottom:10px;">
+          <p style="margin-bottom:8px;"><strong>🚗 Transport</strong></p>
+          <div class="row"><a href="https://www.eea.europa.eu/highlights/co2-emissions-from-passenger-transport" target="_blank">✈️ EEA Transport Emissions</a><span>Compare modes of travel</span></div>
+          <div class="row"><a href="https://www.blablacar.com" target="_blank">🚘 BlaBlaCar</a><span>Long-distance carpooling</span></div>
+          <div class="row"><a href="https://www.seat61.com" target="_blank">🚆 The Man in Seat 61</a><span>Train travel vs flying</span></div>
+          <div class="row"><a href="https://atmosfair.de/en" target="_blank">🛫 Atmosfair</a><span>Flight offset calculator</span></div>
+        </div>
+
+        <!-- ── Home & Energy ── -->
+        <div class="glass-panel" style="margin-bottom:10px;">
+          <p style="margin-bottom:8px;"><strong>🏠 Home & Energy</strong></p>
+          <div class="row"><a href="https://www.energy.gov/energysaver/energy-saver" target="_blank">⚡ Energy.gov Saver</a><span>Home efficiency tips</span></div>
+          <div class="row"><a href="https://www.energyguide.com" target="_blank">💡 EnergyGuide</a><span>Compare home energy plans</span></div>
+          <div class="row"><a href="https://www.thegreenage.co.uk" target="_blank">🌿 The Green Age</a><span>Renewables & insulation</span></div>
+          <div class="row"><a href="https://www.ovo.com/green-living" target="_blank">🔋 OVO Green Living</a><span>Smart home guides</span></div>
+        </div>
+
+        <!-- ── Fashion & Shopping ── -->
+        <div class="glass-panel" style="margin-bottom:10px;">
+          <p style="margin-bottom:8px;"><strong>👕 Fashion & Shopping</strong></p>
+          <div class="row"><a href="https://www.goodonyou.eco" target="_blank">✅ Good On You</a><span>Brand ethics ratings</span></div>
+          <div class="row"><a href="https://www.depop.com" target="_blank">🛍️ Depop</a><span>Buy & sell second-hand</span></div>
+          <div class="row"><a href="https://www.thredup.com" target="_blank">👚 ThredUp</a><span>Online thrift & consignment</span></div>
+          <div class="row"><a href="https://www.fashionrevolution.org" target="_blank">✊ Fashion Revolution</a><span>Who made your clothes?</span></div>
+        </div>
+
+        <!-- ── Offset & Give ── -->
+        <div class="glass-panel" style="margin-bottom:10px;">
+          <p style="margin-bottom:8px;"><strong>🌳 Offset & Give Back</strong></p>
+          <div class="row"><a href="https://www.goldstandard.org" target="_blank">🥇 Gold Standard</a><span>Verified carbon offsets</span></div>
+          <div class="row"><a href="https://onetreeplanted.org" target="_blank">🌲 One Tree Planted</a><span>$1 plants one tree</span></div>
+          <div class="row"><a href="https://www.terrapass.com" target="_blank">🌐 TerraPass</a><span>Carbon offset subscriptions</span></div>
+          <div class="row"><a href="https://www.givingwhatwecan.org/en/cause-areas/climate-change" target="_blank">💚 Giving What We Can</a><span>Effective climate giving</span></div>
+        </div>
+
+        <!-- ── Learn More ── -->
+        <div class="glass-panel" style="margin-bottom:10px;">
+          <p style="margin-bottom:8px;"><strong>📚 Learn More</strong></p>
+          <div class="row"><a href="https://drawdown.org" target="_blank">📉 Project Drawdown</a><span>Top climate solutions ranked</span></div>
+          <div class="row"><a href="https://ourworldindata.org/co2-and-greenhouse-gas-emissions" target="_blank">📊 Our World in Data</a><span>Emissions data & charts</span></div>
+          <div class="row"><a href="https://www.ipcc.ch/reports" target="_blank">🔬 IPCC Reports</a><span>The science, direct</span></div>
+          <div class="row"><a href="https://climatehub.eco" target="_blank">🌐 Climate Hub</a><span>Community & actions</span></div>
+        </div>
+
+        <p style="font-size:11px; opacity:0.65; margin-top:4px; margin-bottom:10px; text-align:center;">
+          Links open in a new tab. SusCalc is not affiliated with any external sites.
+        </p>
+
+        <div style="text-align:center;">
+          <span style="font-size:32px;">🌍</span>
+          <p style="font-size:11px; color:var(--text-mid); margin-top:4px;">Small changes, compounded daily, change everything.</p>
+        </div>
+      </div>
+    </div>
+    <!-- WINDOW: Tips -->
+    <div class="xp-window" id="win-tips" data-start-hidden="true" data-title="Eco Tips" data-icon="💡" style="left:820px; top:420px; width:360px;">
+      <div class="window-body">
+        <h1><span class="leaf-icon">💡</span> Eco Tips</h1>
+        <div class="glass-panel">
+          <div class="tip-item">🚿 <strong>Showers:</strong> Cutting 2 min saves ~36 kg CO₂/yr.</div>
+          <div class="tip-item">🥩 <strong>Meat:</strong> One meatless day/week saves ~156 kg CO₂/yr.</div>
+          <div class="tip-item">🚗 <strong>Car:</strong> Carpooling halves your driving emissions.</div>
+          <div class="tip-item">✈️ <strong>Flights:</strong> One fewer flight saves ~255 kg CO₂.</div>
+          <div class="tip-item">👕 <strong>Fashion:</strong> Buy second-hand and save ~7 kg per item.</div>
+          <hr>
+          <div class="tip-item">🌱 The average person emits ~4–8 tons of CO₂ per year.</div>
+          <div class="tip-item">🎯 Aim for under 2 tons to align with climate goals.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         ADD MORE WINDOWS ABOVE THIS LINE
+    ====================================================== -->
+
+    <!-- Falling items container -->
+    <div id="falling-zone"></div>
+
+    <!-- Bins row — TOP RIGHT -->
+    <div id="bins-row">
+
+      <!-- Recycle Bin (Blue) -->
+      <div class="desktop-bin" id="recycle-bin" data-type="recycle" title="Recycle Bin">
+        <div class="bin-icon" id="recycle-icon">♻️</div>
+        <div class="bin-label">Recycle Bin</div>
+        <div class="bin-count" id="recycle-count"></div>
+        <div class="bin-tooltip">
+          <strong>♻️ Accepted:</strong><br>
+          Paper &amp; Cardboard<br>
+          Metals (cans, foil)<br>
+          Plastics #1 &amp; #2<br>
+          Cartons, Glass<br>
+          <em>Must be clean &amp; dry!</em>
         </div>
       </div>
 
-    </div><!-- /window-body -->
-  </div><!-- /window -->
+      <!-- Trash Bin (Black) -->
+      <div class="desktop-bin" id="trash-bin" data-type="trash" title="Trash Bin">
+        <div class="bin-icon" id="trash-icon">🗑️</div>
+        <div class="bin-label">Trash</div>
+        <div class="bin-count" id="trash-count"></div>
+        <div class="bin-tooltip">
+          <strong>🗑️ Accepted:</strong><br>
+          Food-soiled items<br>
+          Plastic bags &amp; film<br>
+          Styrofoam<br>
+          Mixed materials<br>
+          <em>No recyclables!</em>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /desktop -->
 
   <!-- XP Taskbar -->
-  <div class="taskbar">
-    <div class="start-btn">
-      <span>🪟</span> start
+  <div id="taskbar">
+    <div class="start-btn" id="startBtn">
+      <span class="start-leaf">🌿</span>
+    </div>
+    <div id="taskbar-windows">
+      <!-- Taskbar buttons are injected by WindowManager -->
     </div>
     <span class="taskbar-clock" id="taskbarClock"></span>
+    <div id="trash-counter"><span id="trash-counter-icon">♻️</span><span id="trash-counter-num">0</span><span id="trash-counter-label"> missed</span></div>
+  </div>
+
+  <!-- Start Menu -->
+  <div id="start-menu">
+    <div class="start-menu-header">
+      <span style="font-size:28px;">🌿</span>
+      <div>
+        <div style="font-weight:bold; font-size:13px;">SusCalc User</div>
+        <div style="font-size:11px; opacity:0.8;">Carbon Tracker</div>
+      </div>
+    </div>
+    <div class="start-menu-items" id="startMenuItems">
+      <!-- Populated by WindowManager -->
+    </div>
+    <div class="start-menu-footer">
+      <button class="start-menu-action" onclick="document.getElementById('start-menu').classList.remove('open')">🔴 Close Menu</button>
+    </div>
   </div>
 
   <script src="app.js"></script>
+  <script>
+    /* Boot screen — dismiss after 2s */
+    (function () {
+      const boot = document.getElementById('boot-screen');
+      setTimeout(function () {
+        boot.classList.add('fade-out');
+        setTimeout(function () { boot.style.display = 'none'; }, 650);
+      }, 2000);
+    })();
+  </script>
   <script>
     /* Taskbar clock */
     function updateClock() {
@@ -155,6 +442,6 @@
     updateClock();
     setInterval(updateClock, 1000);
   </script>
-
+  <div id="field-tip-box"></div>
 </body>
 </html>
