@@ -16,15 +16,19 @@ import java.nio.file.Paths;
 
 public class SusCalcServer {
 
-    private static final double CO2_PER_SHOWER_MINUTE = 0.10;
-    private static final double CO2_PER_RED_MEAT_MEAL = 7.0;
-    private static final double CO2_PER_CAR_MILE = 0.404;
-    private static final double CO2_PER_FLIGHT = 250.0;
-    private static final double CO2_PER_FAST_FASHION_ITEM = 8.0;
+    private static final double CO2_PER_SHOWER_MINUTE      = 0.10;
+    private static final double CO2_PER_RED_MEAT_MEAL      = 6.9;
+    private static final double CO2_PER_CAR_MILE           = 0.404;
+    private static final double CO2_PER_FLIGHT             = 190.0;
+    private static final double CO2_PER_FAST_FASHION_ITEM  = 8.0;
+    private static final double CO2_PER_DOLLAR_ELECTRICITY = 2.27;
+    private static final double CO2_PER_GALLON_WATER       = 0.10;
+    private static final double CO2_PER_DOLLAR_SHOPPING    = 0.231;
+    private static final double CO2_PER_AI_SEARCH          = 0.00114;
 
     private static final String INDEX_FILE = "suscalc_index.html";
     private static final String STYLE_FILE = "styles.css";
-    private static final String JS_FILE = "app.js";
+    private static final String JS_FILE    = "app.js";
 
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8071), 0);
@@ -36,51 +40,52 @@ public class SusCalcServer {
         server.start();
         System.out.println("SusCalc backend running at http://localhost:8071");
     }
-  
+
     private static String getMimeType(Path path) {
-      String name = path.getFileName().toString();
-      if (name.endsWith(".css"))  return "text/css; charset=UTF-8";
-      if (name.endsWith(".js"))   return "application/javascript; charset=UTF-8";
-      return "text/html; charset=UTF-8";
+        String name = path.getFileName().toString();
+        if (name.endsWith(".css")) return "text/css; charset=UTF-8";
+        if (name.endsWith(".js"))  return "application/javascript; charset=UTF-8";
+        return "text/html; charset=UTF-8";
     }
+
     // -------------------------------------------------------------------------
-    // GET / — serves suscalc_index.html
+    // GET / — serves static files
     // -------------------------------------------------------------------------
     static class IndexHandler implements HttpHandler {
-    private final Path htmlPath;
+        private final Path filePath;
 
-    IndexHandler(String filePath) {
-        this.htmlPath = Paths.get(filePath);
-    }
+        IndexHandler(String filePath) {
+            this.filePath = Paths.get(filePath);
+        }
 
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        addCorsHeaders(exchange);
-        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(204, -1);
-            exchange.close();
-            return;
-        }
-        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-            sendResponse(exchange, 405, "text/plain", "Only GET is allowed on this endpoint.");
-            return;
-        }
-        if (!Files.exists(htmlPath)) {
-            sendResponse(exchange, 404, "text/plain", htmlPath + " not found.");
-            return;
-        }
-        try {
-            byte[] htmlBytes = Files.readAllBytes(htmlPath);
-            exchange.getResponseHeaders().set("Content-Type", getMimeType(htmlPath));
-            exchange.sendResponseHeaders(200, htmlBytes.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(htmlBytes);
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            addCorsHeaders(exchange);
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                exchange.close();
+                return;
             }
-        } catch (IOException e) {
-            sendResponse(exchange, 500, "text/plain", "Error reading " + htmlPath);
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, "text/plain", "Only GET is allowed on this endpoint.");
+                return;
+            }
+            if (!Files.exists(filePath)) {
+                sendResponse(exchange, 404, "text/plain", filePath + " not found.");
+                return;
+            }
+            try {
+                byte[] bytes = Files.readAllBytes(filePath);
+                exchange.getResponseHeaders().set("Content-Type", getMimeType(filePath));
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+            } catch (IOException e) {
+                sendResponse(exchange, 500, "text/plain", "Error reading " + filePath);
+            }
         }
     }
-  }
 
     // -------------------------------------------------------------------------
     // POST /calculate — computes CO2 impact and returns JSON
@@ -109,10 +114,16 @@ public class SusCalcServer {
                 double carMilesPerWeek        = extractDouble(body, "carMilesPerWeek");
                 int    flightsPerYear         = extractInt   (body, "flightsPerYear");
                 int    fashionItemsPerMonth   = extractInt   (body, "fashionItemsPerMonth");
+                double monthlyElectricityBill = extractDouble(body, "monthlyElectricityBill");
+                double monthlyWaterBill       = extractDouble(body, "monthlyWaterBill");
+                double monthlyShoppingSpend   = extractDouble(body, "monthlyShoppingSpend");
+                int    aiSearchesPerDay       = extractInt   (body, "aiSearchesPerDay");
 
                 String validationError = validateInputs(
                         showerMinutesPerDay, redMeatMealsPerWeek,
-                        carMilesPerWeek, flightsPerYear, fashionItemsPerMonth);
+                        carMilesPerWeek, flightsPerYear, fashionItemsPerMonth,
+                        monthlyElectricityBill, monthlyWaterBill,
+                        monthlyShoppingSpend, aiSearchesPerDay);
 
                 if (validationError != null) {
                     sendJson(exchange, 400, "{\"error\":\"" + escapeJson(validationError) + "\"}");
@@ -121,15 +132,21 @@ public class SusCalcServer {
 
                 HabitImpact impact = calculateImpact(
                         showerMinutesPerDay, redMeatMealsPerWeek,
-                        carMilesPerWeek, flightsPerYear, fashionItemsPerMonth);
+                        carMilesPerWeek, flightsPerYear, fashionItemsPerMonth,
+                        monthlyElectricityBill, monthlyWaterBill,
+                        monthlyShoppingSpend, aiSearchesPerDay);
 
                 String json = "{"
-                        + "\"showerCO2\":"        + impact.getShowerCO2()  + ","
-                        + "\"meatCO2\":"          + impact.getMeatCO2()    + ","
-                        + "\"carCO2\":"           + impact.getCarCO2()     + ","
-                        + "\"flightCO2\":"        + impact.getFlightCO2()  + ","
-                        + "\"fashionCO2\":"       + impact.getFashionCO2() + ","
-                        + "\"totalCO2\":"         + impact.getTotalCO2()   + ","
+                        + "\"showerCO2\":"        + impact.getShowerCO2()        + ","
+                        + "\"meatCO2\":"          + impact.getMeatCO2()          + ","
+                        + "\"carCO2\":"           + impact.getCarCO2()           + ","
+                        + "\"flightCO2\":"        + impact.getFlightCO2()        + ","
+                        + "\"fashionCO2\":"       + impact.getFashionCO2()       + ","
+                        + "\"electricityCO2\":"   + impact.getElectricityCO2()   + ","
+                        + "\"waterCO2\":"         + impact.getWaterCO2()         + ","
+                        + "\"shoppingCO2\":"      + impact.getShoppingCO2()      + ","
+                        + "\"aiCO2\":"            + impact.getAiCO2()            + ","
+                        + "\"totalCO2\":"         + impact.getTotalCO2()         + ","
                         + "\"biggestCategory\":\"" + escapeJson(impact.getBiggestCategory()) + "\","
                         + "\"recommendation\":\""  + escapeJson(impact.getRecommendation())  + "\""
                         + "}";
@@ -151,25 +168,38 @@ public class SusCalcServer {
                                                int    redMeatMealsPerWeek,
                                                double carMilesPerWeek,
                                                int    flightsPerYear,
-                                               int    fashionItemsPerMonth) {
+                                               int    fashionItemsPerMonth,
+                                               double monthlyElectricityBill,
+                                               double monthlyWaterBill,
+                                               double monthlyShoppingSpend,
+                                               int    aiSearchesPerDay) {
 
-        double showerCO2  = showerMinutesPerDay  * 365 * CO2_PER_SHOWER_MINUTE;
-        double meatCO2    = redMeatMealsPerWeek  *  52 * CO2_PER_RED_MEAT_MEAL;
-        double carCO2     = carMilesPerWeek       *  52 * CO2_PER_CAR_MILE;
-        double flightCO2  = flightsPerYear              * CO2_PER_FLIGHT;
-        double fashionCO2 = fashionItemsPerMonth  *  12 * CO2_PER_FAST_FASHION_ITEM;
+        double showerCO2      = showerMinutesPerDay    * 365 * CO2_PER_SHOWER_MINUTE;
+        double meatCO2        = redMeatMealsPerWeek    *  52 * CO2_PER_RED_MEAT_MEAL;
+        double carCO2         = carMilesPerWeek        *  52 * CO2_PER_CAR_MILE;
+        double flightCO2      = flightsPerYear              * CO2_PER_FLIGHT;
+        double fashionCO2     = fashionItemsPerMonth   *  12 * CO2_PER_FAST_FASHION_ITEM;
+        double electricityCO2 = monthlyElectricityBill *  12 * CO2_PER_DOLLAR_ELECTRICITY;
+        double waterCO2       = monthlyWaterBill        *  12 * CO2_PER_GALLON_WATER;
+        double shoppingCO2    = monthlyShoppingSpend    *  12 * CO2_PER_DOLLAR_SHOPPING;
+        double aiCO2          = aiSearchesPerDay        * 365 * CO2_PER_AI_SEARCH;
 
-        double totalCO2 = showerCO2 + meatCO2 + carCO2 + flightCO2 + fashionCO2;
+        double totalCO2 = showerCO2 + meatCO2 + carCO2 + flightCO2 + fashionCO2
+                        + electricityCO2 + waterCO2 + shoppingCO2 + aiCO2;
 
         String biggestCategory = "Showers";
         double biggestValue    = showerCO2;
-
-        if (meatCO2    > biggestValue) { biggestValue = meatCO2;    biggestCategory = "Red Meat";    }
-        if (carCO2     > biggestValue) { biggestValue = carCO2;     biggestCategory = "Car Travel";  }
-        if (flightCO2  > biggestValue) { biggestValue = flightCO2;  biggestCategory = "Flights";     }
-        if (fashionCO2 > biggestValue) {                            biggestCategory = "Fast Fashion"; }
+        if (meatCO2        > biggestValue) { biggestValue = meatCO2;        biggestCategory = "Red Meat";     }
+        if (carCO2         > biggestValue) { biggestValue = carCO2;         biggestCategory = "Car Travel";   }
+        if (flightCO2      > biggestValue) { biggestValue = flightCO2;      biggestCategory = "Flights";      }
+        if (fashionCO2     > biggestValue) { biggestValue = fashionCO2;     biggestCategory = "Fast Fashion"; }
+        if (electricityCO2 > biggestValue) { biggestValue = electricityCO2; biggestCategory = "Electricity";  }
+        if (waterCO2       > biggestValue) { biggestValue = waterCO2;       biggestCategory = "Water";        }
+        if (shoppingCO2    > biggestValue) { biggestValue = shoppingCO2;    biggestCategory = "Shopping";     }
+        if (aiCO2          > biggestValue) {                                 biggestCategory = "AI Searches";  }
 
         return new HabitImpact(showerCO2, meatCO2, carCO2, flightCO2, fashionCO2,
+                               electricityCO2, waterCO2, shoppingCO2, aiCO2,
                                totalCO2, biggestCategory, buildRecommendation(biggestCategory));
     }
 
@@ -180,6 +210,10 @@ public class SusCalcServer {
             case "Car Travel":   return "Try carpooling, public transit, or combining trips to cut driving emissions.";
             case "Flights":      return "Reducing even one flight per year can significantly lower your footprint.";
             case "Fast Fashion": return "Buy fewer new clothes, thrift more often, and choose longer-lasting items.";
+            case "Electricity":  return "Switch to LED bulbs, unplug idle devices, and consider a renewable energy plan.";
+            case "Water":        return "Fix leaks, install low-flow fixtures, and shorten outdoor watering cycles.";
+            case "Shopping":     return "Buy secondhand, repair instead of replace, and avoid impulse purchases.";
+            case "AI Searches":  return "Batch your AI queries, use lighter models when possible, and prefer cached results.";
             default:             return "Keep improving one habit at a time.";
         }
     }
@@ -188,12 +222,20 @@ public class SusCalcServer {
                                          int    redMeatMealsPerWeek,
                                          double carMilesPerWeek,
                                          int    flightsPerYear,
-                                         int    fashionItemsPerMonth) {
-        if (showerMinutesPerDay  < 0 || showerMinutesPerDay  > 120)  return "Average shower minutes per day must be between 0 and 120.";
-        if (redMeatMealsPerWeek  < 0 || redMeatMealsPerWeek  >  50)  return "Red meat meals per week must be between 0 and 50.";
-        if (carMilesPerWeek      < 0 || carMilesPerWeek      > 5000) return "Car miles per week must be between 0 and 5000.";
-        if (flightsPerYear       < 0 || flightsPerYear       >  100) return "Flights per year must be between 0 and 100.";
-        if (fashionItemsPerMonth < 0 || fashionItemsPerMonth >  100) return "Fast fashion items per month must be between 0 and 100.";
+                                         int    fashionItemsPerMonth,
+                                         double monthlyElectricityBill,
+                                         double monthlyWaterBill,
+                                         double monthlyShoppingSpend,
+                                         int    aiSearchesPerDay) {
+        if (showerMinutesPerDay    < 0 || showerMinutesPerDay    > 120)   return "Shower minutes must be 0–120.";
+        if (redMeatMealsPerWeek    < 0 || redMeatMealsPerWeek    >  50)   return "Red meat meals must be 0–50.";
+        if (carMilesPerWeek        < 0 || carMilesPerWeek        > 5000)  return "Car miles must be 0–5000.";
+        if (flightsPerYear         < 0 || flightsPerYear         >  100)  return "Flights must be 0–100.";
+        if (fashionItemsPerMonth   < 0 || fashionItemsPerMonth   >  100)  return "Fashion items must be 0–100.";
+        if (monthlyElectricityBill < 0 || monthlyElectricityBill > 10000) return "Electricity bill must be 0–10,000.";
+        if (monthlyWaterBill       < 0 || monthlyWaterBill       > 10000) return "Water bill must be 0–10,000.";
+        if (monthlyShoppingSpend   < 0 || monthlyShoppingSpend   > 50000) return "Shopping spend must be 0–50,000.";
+        if (aiSearchesPerDay       < 0 || aiSearchesPerDay       > 10000) return "AI searches must be 0–10,000.";
         return null;
     }
 
@@ -208,7 +250,6 @@ public class SusCalcServer {
     }
 
     private static void sendJson(HttpExchange exchange, int status, String json) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         sendResponse(exchange, status, "application/json", json);
     }
 
@@ -267,17 +308,24 @@ public class SusCalcServer {
 // Value object
 // -----------------------------------------------------------------------------
 class HabitImpact {
-    private final double showerCO2, meatCO2, carCO2, flightCO2, fashionCO2, totalCO2;
+    private final double showerCO2, meatCO2, carCO2, flightCO2, fashionCO2;
+    private final double electricityCO2, waterCO2, shoppingCO2, aiCO2, totalCO2;
     private final String biggestCategory, recommendation;
 
     public HabitImpact(double showerCO2, double meatCO2, double carCO2,
-                       double flightCO2, double fashionCO2, double totalCO2,
-                       String biggestCategory, String recommendation) {
+                       double flightCO2, double fashionCO2,
+                       double electricityCO2, double waterCO2,
+                       double shoppingCO2, double aiCO2,
+                       double totalCO2, String biggestCategory, String recommendation) {
         this.showerCO2       = showerCO2;
         this.meatCO2         = meatCO2;
         this.carCO2          = carCO2;
         this.flightCO2       = flightCO2;
         this.fashionCO2      = fashionCO2;
+        this.electricityCO2  = electricityCO2;
+        this.waterCO2        = waterCO2;
+        this.shoppingCO2     = shoppingCO2;
+        this.aiCO2           = aiCO2;
         this.totalCO2        = totalCO2;
         this.biggestCategory = biggestCategory;
         this.recommendation  = recommendation;
@@ -288,6 +336,10 @@ class HabitImpact {
     public double getCarCO2()          { return carCO2;          }
     public double getFlightCO2()       { return flightCO2;       }
     public double getFashionCO2()      { return fashionCO2;      }
+    public double getElectricityCO2()  { return electricityCO2;  }
+    public double getWaterCO2()        { return waterCO2;        }
+    public double getShoppingCO2()     { return shoppingCO2;     }
+    public double getAiCO2()           { return aiCO2;           }
     public double getTotalCO2()        { return totalCO2;        }
     public String getBiggestCategory() { return biggestCategory; }
     public String getRecommendation()  { return recommendation;  }

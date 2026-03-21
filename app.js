@@ -193,40 +193,57 @@ class WindowManager {
    ===================================================== */
 
 const AVERAGES = {
-  showerMinutes: 8,
-  redMeat:       5,
-  carMiles:      230,
-  flights:       6,
-  fashion:       5
+  showerMinutes:      8,
+  redMeat:            5,
+  carMiles:           230,
+  flights:            6,
+  fashion:            5,
+  electricity:        120,
+  water:              50,
+  shopping:           200,
+  aiSearches:         20
 };
 
 const FACTORS = {
-  shower:  (v) => v * 365 * 0.05,
-  meat:    (v) => v * 52  * 3.0,
-  car:     (v) => v * 52  * 0.21,
-  flight:  (v) => v * 255,
-  fashion: (v) => v * 12  * 7.0
+  shower:      (v) => v * 365 * 0.10,
+  meat:        (v) => v * 52  * 6.9,
+  car:         (v) => v * 52  * 0.404,
+  flight:      (v) => v * 190.0,
+  fashion:     (v) => v * 12  * 8.0,
+  electricity: (v) => v * 12  * 2.27,
+  water:       (v) => v * 12  * 0.10,
+  shopping:    (v) => v * 12  * 0.231,
+  ai:          (v) => v * 365 * 0.00114
 };
 
 const RECOMMENDATIONS = {
-  shower:  'Try cutting your shower by 2 min — saves ~36 kg CO2/yr.',
-  meat:    'One meatless day/week saves ~156 kg CO2/yr.',
-  car:     'Carpooling or public transit a few days/week makes a big difference.',
-  flight:  'One fewer short-haul flight saves ~255 kg CO2. Consider train travel.',
-  fashion: 'Buy second-hand or swap clothes instead of buying new.'
+  shower:      'Try cutting your shower by 2 min — saves ~36 kg CO2/yr.',
+  meat:        'One meatless day/week saves ~156 kg CO2/yr.',
+  car:         'Carpooling or public transit a few days/week makes a big difference.',
+  flight:      'One fewer short-haul flight saves ~255 kg CO2. Consider train travel.',
+  fashion:     'Buy second-hand or swap clothes instead of buying new.',
+  electricity: 'Switch to LED bulbs, unplug idle devices, and consider a renewable energy plan.',
+  water:       'Fix leaks, install low-flow fixtures, and shorten outdoor watering cycles.',
+  shopping:    'Buy secondhand, repair instead of replace, and avoid impulse purchases.',
+  ai:          'Batch your AI queries, use lighter models when possible, and prefer cached results.'
 };
 
 const CATEGORY_NAMES = {
   shower: 'Showers', meat: 'Red Meat',
-  car: 'Car Travel', flight: 'Flights', fashion: 'Fast Fashion'
+  car: 'Car Travel', flight: 'Flights', fashion: 'Fast Fashion',
+  electricity: 'Electricity', water: 'Water', shopping: 'Shopping', ai: 'AI Searches'
 };
 
 const FIELDS = [
-  { key: 'shower',  sliderId: 'showerMinutes', numId: 'showerMinutesNum', unit: 'min/day',    avgKey: 'showerMinutes' },
-  { key: 'meat',    sliderId: 'redMeat',        numId: 'redMeatNum',       unit: 'meals/wk',   avgKey: 'redMeat'       },
-  { key: 'car',     sliderId: 'carMiles',       numId: 'carMilesNum',      unit: 'mi/wk',      avgKey: 'carMiles'      },
-  { key: 'flight',  sliderId: 'flights',        numId: 'flightsNum',       unit: 'flights/yr', avgKey: 'flights'       },
-  { key: 'fashion', sliderId: 'fashion',        numId: 'fashionNum',       unit: 'items/mo',   avgKey: 'fashion'       }
+  { key: 'shower',      sliderId: 'showerMinutes', numId: 'showerMinutesNum', unit: 'min/day',    avgKey: 'showerMinutes' },
+  { key: 'meat',        sliderId: 'redMeat',        numId: 'redMeatNum',       unit: 'meals/wk',   avgKey: 'redMeat'       },
+  { key: 'car',         sliderId: 'carMiles',       numId: 'carMilesNum',      unit: 'mi/wk',      avgKey: 'carMiles'      },
+  { key: 'flight',      sliderId: 'flights',        numId: 'flightsNum',       unit: 'flights/yr', avgKey: 'flights'       },
+  { key: 'fashion',     sliderId: 'fashion',        numId: 'fashionNum',       unit: 'items/mo',   avgKey: 'fashion'       },
+  { key: 'electricity', sliderId: 'electricity',    numId: 'electricityNum',   unit: '$/mo',       avgKey: 'electricity'   },
+  { key: 'water',       sliderId: 'water',          numId: 'waterNum',         unit: '$/mo',       avgKey: 'water'         },
+  { key: 'shopping',    sliderId: 'shopping',       numId: 'shoppingNum',      unit: '$/mo',       avgKey: 'shopping'      },
+  { key: 'ai',          sliderId: 'aiSearches',     numId: 'aiSearchesNum',    unit: 'searches/day', avgKey: 'aiSearches'  }
 ];
 
 let currentMode = 'slider';
@@ -336,11 +353,15 @@ async function calculate() {
   resultsDiv.style.display = 'none';
 
   const payload = {
-    showerMinutesPerDay:  getFieldValue(FIELDS.find(f => f.key === 'shower')),
-    redMeatMealsPerWeek:  getFieldValue(FIELDS.find(f => f.key === 'meat')),
-    carMilesPerWeek:      getFieldValue(FIELDS.find(f => f.key === 'car')),
-    flightsPerYear:       getFieldValue(FIELDS.find(f => f.key === 'flight')),
-    fashionItemsPerMonth: getFieldValue(FIELDS.find(f => f.key === 'fashion'))
+    showerMinutesPerDay:    getFieldValue(FIELDS.find(f => f.key === 'shower')),
+    redMeatMealsPerWeek:    getFieldValue(FIELDS.find(f => f.key === 'meat')),
+    carMilesPerWeek:        getFieldValue(FIELDS.find(f => f.key === 'car')),
+    flightsPerYear:         getFieldValue(FIELDS.find(f => f.key === 'flight')),
+    fashionItemsPerMonth:   getFieldValue(FIELDS.find(f => f.key === 'fashion')),
+    monthlyElectricityBill: getFieldValue(FIELDS.find(f => f.key === 'electricity')),
+    monthlyWaterBill:       getFieldValue(FIELDS.find(f => f.key === 'water')),
+    monthlyShoppingSpend:   getFieldValue(FIELDS.find(f => f.key === 'shopping')),
+    aiSearchesPerDay:       getFieldValue(FIELDS.find(f => f.key === 'ai'))
   };
 
   try {
@@ -362,6 +383,10 @@ async function calculate() {
     document.getElementById('carCO2').textContent          = data.carCO2.toFixed(2);
     document.getElementById('flightCO2').textContent       = data.flightCO2.toFixed(2);
     document.getElementById('fashionCO2').textContent      = data.fashionCO2.toFixed(2);
+    document.getElementById('electricityCO2').textContent  = data.electricityCO2.toFixed(2);
+    document.getElementById('waterCO2').textContent        = data.waterCO2.toFixed(2);
+    document.getElementById('shoppingCO2').textContent     = data.shoppingCO2.toFixed(2);
+    document.getElementById('aiCO2').textContent           = data.aiCO2.toFixed(2);
     document.getElementById('totalCO2').textContent        = data.totalCO2.toFixed(2);
     document.getElementById('totalTons').textContent       = (data.totalCO2 / 1000).toFixed(3);
     document.getElementById('biggestCategory').textContent = data.biggestCategory;
@@ -374,7 +399,7 @@ async function calculate() {
     updateHistogram(data);
 
   } catch (err) {
-    statusDiv.textContent = '❌ Could not connect to the backend.';
+    statusDiv.textContent = err;
   }
 }
 
@@ -385,11 +410,15 @@ async function calculate() {
 
 /* Minor-change alternatives used for the green bars */
 const ALT_DELTAS = {
-  shower: { label: 'Shower', icon: '🚿', altDesc: '−2 min/day',       factor: (v) => Math.max(0, v - 2) * 365 * 0.05 },
-  meat:   { label: 'Red Meat', icon: '🥩', altDesc: '−1 meal/week',    factor: (v) => Math.max(0, v - 1) * 52 * 3.0   },
-  car:    { label: 'Car',      icon: '🚗', altDesc: '−20% miles',      factor: (v) => v * 0.8 * 52 * 0.21              },
-  flight: { label: 'Flights',  icon: '✈️', altDesc: '−1 flight/yr',    factor: (v) => Math.max(0, v - 1) * 255         },
-  fashion:{ label: 'Fashion',  icon: '👕', altDesc: '−2 items/month',  factor: (v) => Math.max(0, v - 2) * 12 * 7.0   }
+  shower:      { label: 'Shower',      icon: '🚿', altDesc: '−2 min/day',       factor: (v) => Math.max(0, v - 2) * 365 * 0.10 },
+  meat:        { label: 'Red Meat',    icon: '🥩', altDesc: '−1 meal/week',      factor: (v) => Math.max(0, v - 1) * 52 * 6.9   },
+  car:         { label: 'Car',         icon: '🚗', altDesc: '−20% miles',        factor: (v) => v * 0.8 * 52 * 0.404            },
+  flight:      { label: 'Flights',     icon: '✈️', altDesc: '−1 flight/yr',      factor: (v) => Math.max(0, v - 1) * 190.0      },
+  fashion:     { label: 'Fashion',     icon: '👕', altDesc: '−2 items/month',    factor: (v) => Math.max(0, v - 2) * 12 * 8.0   },
+  electricity: { label: 'Electricity', icon: '⚡', altDesc: '−10% bill',         factor: (v) => v * 0.9 * 12 * 2.27             },
+  water:       { label: 'Water',       icon: '💧', altDesc: '−10% bill',         factor: (v) => v * 0.9 * 12 * 0.10            },
+  shopping:    { label: 'Shopping',    icon: '🛍️', altDesc: '−20% spend',        factor: (v) => v * 0.8 * 12 * 0.231            },
+  ai:          { label: 'AI',          icon: '🤖', altDesc: '−25% searches',     factor: (v) => v * 0.75 * 365 * 0.00114        }
 };
 
 /* Map backend response keys → field keys */
@@ -403,20 +432,28 @@ function updateHistogram(data) {
 
   // Read current input values
   const inputs = {
-    shower:  getFieldValue(FIELDS.find(f => f.key === 'shower')),
-    meat:    getFieldValue(FIELDS.find(f => f.key === 'meat')),
-    car:     getFieldValue(FIELDS.find(f => f.key === 'car')),
-    flight:  getFieldValue(FIELDS.find(f => f.key === 'flight')),
-    fashion: getFieldValue(FIELDS.find(f => f.key === 'fashion'))
+    shower:      getFieldValue(FIELDS.find(f => f.key === 'shower')),
+    meat:        getFieldValue(FIELDS.find(f => f.key === 'meat')),
+    car:         getFieldValue(FIELDS.find(f => f.key === 'car')),
+    flight:      getFieldValue(FIELDS.find(f => f.key === 'flight')),
+    fashion:     getFieldValue(FIELDS.find(f => f.key === 'fashion')),
+    electricity: getFieldValue(FIELDS.find(f => f.key === 'electricity')),
+    water:       getFieldValue(FIELDS.find(f => f.key === 'water')),
+    shopping:    getFieldValue(FIELDS.find(f => f.key === 'shopping')),
+    ai:          getFieldValue(FIELDS.find(f => f.key === 'ai'))
   };
 
   // Current CO2 from backend response
   const current = {
-    shower:  data.showerCO2,
-    meat:    data.meatCO2,
-    car:     data.carCO2,
-    flight:  data.flightCO2,
-    fashion: data.fashionCO2
+    shower:      data.showerCO2,
+    meat:        data.meatCO2,
+    car:         data.carCO2,
+    flight:      data.flightCO2,
+    fashion:     data.fashionCO2,
+    electricity: data.electricityCO2,
+    water:       data.waterCO2,
+    shopping:    data.shoppingCO2,
+    ai:          data.aiCO2
   };
 
   // Alt CO2 calculated locally from input values
@@ -900,11 +937,15 @@ function initBins() {
    FIELD HELP TOOLTIP (JS-driven, no blur)
    ===================================================== */
 const TIP_TEXT = {
-  shower: 'Count total minutes per shower each day.\nAverage: ~8 min/day.\nHot water heating is the main CO₂ source.\nA 2-min cut saves ~36 kg CO₂/yr.',
-  meat:   'Count meals containing beef, lamb, or pork.\nBeef emits ~27 kg CO₂ per kg of meat.\nChicken & fish are NOT counted here.\nOne meatless day/wk saves ~156 kg CO₂/yr.',
-  car:    'Total miles driven in any personal vehicle.\nPetrol cars emit ~0.21 kg CO₂ per mile.\nInclude commute, errands & weekend trips.\nUS average: ~230 miles/week.',
-  flight: 'Count each one-way leg as 1 flight.\nA return trip = 2 flights.\nAvg ~255 kg CO₂ per short-haul flight.\nLong-haul flights emit significantly more.',
-  fashion:'New clothing from fast-fashion brands\n(Zara, H&M, Shein, Primark, etc).\nEach item ≈ 7 kg CO₂ to produce & ship.\nSecond-hand & clothes swaps = 0 emissions.',
+  shower:      'Count total minutes per shower each day.\nAverage: ~8 min/day.\nHot water heating is the main CO₂ source.\nA 2-min cut saves ~36 kg CO₂/yr.',
+  meat:        'Count meals containing beef, lamb, or pork.\nBeef emits ~27 kg CO₂ per kg of meat.\nChicken & fish are NOT counted here.\nOne meatless day/wk saves ~156 kg CO₂/yr.',
+  car:         'Total miles driven in any personal vehicle.\nPetrol cars emit ~0.21 kg CO₂ per mile.\nInclude commute, errands & weekend trips.\nUS average: ~230 miles/week.',
+  flight:      'Count each one-way leg as 1 flight.\nA return trip = 2 flights.\nAvg ~255 kg CO₂ per short-haul flight.\nLong-haul flights emit significantly more.',
+  fashion:     'New clothing from fast-fashion brands\n(Zara, H&M, Shein, Primark, etc).\nEach item ≈ 7 kg CO₂ to produce & ship.\nSecond-hand & clothes swaps = 0 emissions.',
+  electricity: 'Enter your average monthly electricity bill.\nUS average: ~$120/month.\nThe CO₂ depends on your grid\'s energy mix.\nSwitching to renewables cuts this to near zero.',
+  water:       'Enter your average monthly water bill.\nUS average: ~$50/month.\nWater treatment & heating adds CO₂.\nFix leaks & use low-flow fixtures to save.',
+  shopping:    'Total monthly spend on goods & services.\nIncludes online orders, household items, etc.\nEvery $1 spent ≈ 0.0007 kg CO₂ embedded.\nBuying secondhand cuts this impact significantly.',
+  ai:          'Count all AI queries per day (ChatGPT, Claude, etc).\nEach AI query uses ~0.003 kg CO₂.\nBatching questions into one prompt saves energy.\nSimpler searches use far less compute.'
 };
 
 function initFieldTips() {
