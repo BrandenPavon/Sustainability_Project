@@ -280,6 +280,27 @@
           </div>
         </div>
 
+        <!-- Earths Needed Section -->
+        <div id="earths-section" style="display:none; margin-top:14px;">
+          <div class="glass-panel earths-panel">
+            <div class="earths-header">
+              <span class="earths-title">🌍 If Everyone Lived Like You…</span>
+            </div>
+            <div class="earths-formula">
+              <span class="formula-piece" id="earthsUserCO2">—</span>
+              <span class="formula-op">÷</span>
+              <span class="formula-piece formula-budget">2,500 kg</span>
+              <span class="formula-op">=</span>
+              <span class="formula-result" id="earthsCount">—</span>
+              <span class="formula-label">Earths needed</span>
+            </div>
+            <p class="earths-budget-note">2,500 kg CO₂/yr = sustainable share per person (1.5 °C target)</p>
+            <div class="earths-verdict" id="earthsVerdict"></div>
+            <div class="earths-globe-wrap" id="earthsGlobeWrap"></div>
+            <p class="earths-footer-note">Each 🌍 = one Earth. Partial shown proportionally.</p>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -296,13 +317,23 @@
             Simply fill in the Calculator window with your daily routines and hit
             <em>Calculate Impact</em> to see a full breakdown.
           </p>
+          <p style="margin-bottom:12px;">
+          <strong>What is Carbon Footprint?</strong>
+          </p>
+          <p style="margin-bottom:12px;">
+          Carbon footprint is the total amount of greenhouse gases, primarily CO₂, released into the atmosphere as a result of a person's, organization's, or product's activities. It is measured in units of carbon dioxide equivalent (CO₂e) and includes emissions from things like energy use, transportation, food consumption, and manufacturing.
+          </p>
           <hr>
           <p style="margin-bottom:8px;"><strong>📐 How we calculate:</strong></p>
-          <div class="row"><strong>🚿 Shower</strong> <span>0.05 kg per min/yr</span></div>
-          <div class="row"><strong>🥩 Red Meat</strong> <span>3.0 kg per meal</span></div>
-          <div class="row"><strong>🚗 Car</strong> <span>0.21 kg per mile</span></div>
-          <div class="row"><strong>✈️ Flight</strong> <span>255 kg per flight</span></div>
-          <div class="row"><strong>👕 Fashion</strong> <span>7.0 kg per item</span></div>
+          <div class="row"><strong>🚿 Shower</strong>      <span>0.10 kg per min/day/yr</span></div>
+          <div class="row"><strong>🥩 Red Meat</strong>     <span>6.9 kg per meal</span></div>
+          <div class="row"><strong>🚗 Car</strong>          <span>0.404 kg per mile</span></div>
+          <div class="row"><strong>✈️ Flight</strong>       <span>190 kg per flight</span></div>
+          <div class="row"><strong>👕 Fashion</strong>      <span>8.0 kg per item</span></div>
+          <div class="row"><strong>⚡ Electricity</strong>  <span>2.27 kg per $/mo</span></div>
+          <div class="row"><strong>💧 Water</strong>        <span>0.10 kg per gallon</span></div>
+          <div class="row"><strong>🛍️ Shopping</strong>     <span>0.231 kg per $/mo</span></div>
+          <div class="row"><strong>🤖 AI Searches</strong>  <span>0.00114 kg per query</span></div>
           <hr>
           <p style="font-size:11px; opacity:0.7; margin-top:8px;">
             Emission factors sourced from publicly available lifecycle assessment data.

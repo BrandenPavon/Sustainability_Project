@@ -441,6 +441,8 @@ function initCalcControls() {
 function clearResults() {
   document.getElementById('status').textContent = '';
   document.getElementById('results').style.display = 'none';
+  const earthsSec = document.getElementById('earths-section');
+  if (earthsSec) earthsSec.style.display = 'none';
 }
 
 async function calculate() {
@@ -494,6 +496,9 @@ async function calculate() {
 
     // Build the histogram from the returned data
     updateHistogram(data);
+
+    // Show the "Earths Needed" section
+    renderEarthsNeeded(data.totalCO2);
 
   } catch (err) {
     statusDiv.textContent = err;
@@ -788,6 +793,98 @@ function buildBarChart(current, alt, inputs, maxCat) {
       el.style.height = el.dataset.px + 'px';
     });
   }));
+}
+
+/* =====================================================
+   EARTHS NEEDED
+   ===================================================== */
+
+const SUSTAINABLE_KG_PER_PERSON = 2500;
+
+function renderEarthsNeeded(totalCO2) {
+  const section   = document.getElementById('earths-section');
+  if (!section) return;
+
+  const earths  = totalCO2 / SUSTAINABLE_KG_PER_PERSON;
+  const rounded = Math.round(earths * 10) / 10;
+
+  // Formula display
+  const userCO2El = document.getElementById('earthsUserCO2');
+  const countEl   = document.getElementById('earthsCount');
+  if (userCO2El) userCO2El.textContent = Math.round(totalCO2).toLocaleString() + ' kg';
+  if (countEl)   countEl.textContent   = rounded.toFixed(1);
+
+  // Verdict badge
+  const verdictEl = document.getElementById('earthsVerdict');
+  if (verdictEl) {
+    let text, cls;
+    if      (earths <= 1) { text = '🌱 Amazing — you live within Earth\'s limits!';              cls = 'verdict-green';  }
+    else if (earths <= 2) { text = '🟡 Getting there — slightly over the sustainable limit.';    cls = 'verdict-yellow'; }
+    else if (earths <= 4) { text = '🟠 We\'d need ' + rounded.toFixed(1) + ' Earths. Room to improve!'; cls = 'verdict-orange'; }
+    else                  { text = '🔴 High impact — ' + rounded.toFixed(1) + ' Earths required.';      cls = 'verdict-red';    }
+    verdictEl.textContent = text;
+    verdictEl.className   = 'earths-verdict ' + cls;
+  }
+
+  // Globe display
+  const globeWrap = document.getElementById('earthsGlobeWrap');
+  if (globeWrap) {
+    globeWrap.innerHTML = '';
+
+    const fullEarths  = Math.floor(earths);
+    const partialFrac = earths - fullEarths;
+    const displayFull = Math.min(fullEarths, 12);
+
+    // Full globes
+    for (let i = 0; i < displayFull; i++) {
+      const el = document.createElement('span');
+      el.className = 'earth-globe';
+      el.textContent = '🌍';
+      el.style.animationDelay = (i * 55) + 'ms';
+      globeWrap.appendChild(el);
+    }
+
+    // Overflow label when > 12 full earths
+    if (fullEarths > 12) {
+      const more = document.createElement('span');
+      more.style.cssText = 'font-size:13px;font-weight:bold;color:var(--deep-green);align-self:center;padding-bottom:6px;';
+      more.textContent = '+ ' + (fullEarths - 12).toLocaleString() + ' more';
+      globeWrap.appendChild(more);
+    }
+
+    // Partial globe (shown when there's a meaningful fraction, or the total is < 1 Earth)
+    const showPartial = partialFrac > 0.04 || (fullEarths === 0 && earths > 0);
+    if (showPartial) {
+      const frac        = fullEarths === 0 ? Math.min(earths, 1) : partialFrac;
+      const clampedFrac = Math.min(Math.max(frac, 0.08), 0.96);
+
+      const wrap = document.createElement('span');
+      wrap.className = 'earth-globe earth-partial';
+      wrap.style.cssText = 'position:relative;width:36px;height:36px;font-size:36px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;';
+      wrap.style.animationDelay = (displayFull * 55) + 'ms';
+
+      const globe = document.createElement('span');
+      globe.textContent = '🌍';
+      globe.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;';
+
+      // Right-side mask that hides the unfilled portion
+      const mask = document.createElement('span');
+      mask.className = 'earth-mask';
+      mask.style.cssText = `
+        position:absolute; top:0; right:0; bottom:0;
+        width:${((1 - clampedFrac) * 100).toFixed(1)}%;
+        background:rgba(200,230,200,0.82);
+        border-radius:0 4px 4px 0;
+        pointer-events:none;
+      `;
+
+      wrap.appendChild(globe);
+      wrap.appendChild(mask);
+      globeWrap.appendChild(wrap);
+    }
+  }
+
+  section.style.display = 'block';
 }
 
 function initHistoToggle() {
