@@ -59,3 +59,21 @@ SusCalc turns daily habits into a personalized carbon footprint estimate, delive
 - **Streamlined Sustainability Information** — Curated resources all in one place
 
 ---
+
+## What Makes Us Different
+
+While other carbon footprint calculators exist, SusCalc stands out through:
+
+- A **unique, clean, and simple interface** designed for ease of use
+- **Helpful visual and comprehensive information presentation**
+- A focus on **taking action**, not just measuring impact
+---
+
+## Validation
+
+- Sent out an interest form → received **64 responses**
+- Deployed a feedback form to testers → received **32 responses with comments**
+- Iteratively fixed bugs, refined UI, and added features based on user feedback
+- Users reported feeling **more motivated to make eco-friendly changes** after using SusCalc
+
+
