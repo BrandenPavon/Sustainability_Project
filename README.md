@@ -37,3 +37,25 @@ SusCalc makes sustainability accessible by combining a fast, intuitive calculato
 4. **Explore recommendations** and linked sustainability resources
 
 ---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | HTML, CSS, JavaScript |
+| Backend | Java 8 HTTP Server |
+| Web Server | NGINX Reverse Proxy |
+| Infrastructure | Linux Server |
+| CDN / Security | Cloudflare Proxy |
+
+---
+
+## Value Proposition
+
+SusCalc turns daily habits into a personalized carbon footprint estimate, delivering:
+
+- **Awareness into Action** — Concrete next steps, not just data
+- **Clear Impact Insights** — Digestible breakdown of where your footprint comes from
+- **Streamlined Sustainability Information** — Curated resources all in one place
+
+---
