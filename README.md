@@ -76,4 +76,25 @@ While other carbon footprint calculators exist, SusCalc stands out through:
 - Iteratively fixed bugs, refined UI, and added features based on user feedback
 - Users reported feeling **more motivated to make eco-friendly changes** after using SusCalc
 
+---
+
+## Impact
+
+After using SusCalc, users:
+
+- Gain digestible, personalized insight into their carbon footprint contributions
+- Receive actionable recommendations they can act on immediately
+- Feel more motivated to make eco-friendly changes — an effect that can scale across individuals, households, and communities
+
+---
+
+## Room for Growth
+
+Future directions for SusCalc include:
+
+- **Habit Tracking** — Log daily spending and travel for ongoing ecological data
+- **Community Forum** — Expand the platform to foster community-wide sustainability initiatives
+- **Learning Modules** — On-site educational content to better inform users about sustainability tactics
+
+---
 
