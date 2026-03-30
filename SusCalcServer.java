@@ -26,9 +26,9 @@ public class SusCalcServer {
     private static final double CO2_PER_DOLLAR_SHOPPING    = 0.231;
     private static final double CO2_PER_AI_SEARCH          = 0.00114;
 
-    private static final String INDEX_FILE = "suscalc_index.html";
-    private static final String STYLE_FILE = "styles.css";
-    private static final String JS_FILE    = "app.js";
+    private static final String INDEX_FILE = "templates/suscalc_index.html";
+    private static final String STYLE_FILE = "static/styles.css";
+    private static final String JS_FILE    = "static/app.js";
 
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8071), 0);
