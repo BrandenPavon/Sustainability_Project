@@ -1,5 +1,5 @@
 # SusCalc 🌱
-**Self Sustainability. Calculated and Curated.**
+**Self Sustainability. Calculated and Curated. Made by Branden Pavon and Sean Sotto**
 
 SusCalc is a web-based carbon footprint calculator and resource hub that helps everyday consumers understand how their daily habits contribute to their environmental impact — and what they can do about it.
 
